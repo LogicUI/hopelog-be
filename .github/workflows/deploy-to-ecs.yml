@@ -1,0 +1,42 @@
+name: Deploy to ECS
+
+on:
+  push:
+    paths:
+      - "**.py" 
+    branches:
+      - main 
+
+jobs:
+  deploy:
+    name: Build, Push to ECR, and Deploy to ECS
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Log in to Amazon ECR
+      id: ecr-login
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build Docker image
+      run: |
+        docker build -t ${{ secrets.ECR_REPOSITORY_URI }}:latest .
+        docker tag ${{ secrets.ECR_REPOSITORY_URI }}:latest ${{ secrets.ECR_REPOSITORY_URI }}:latest
+
+    - name: Push Docker image to ECR
+      run: |
+        docker push ${{ secrets.ECR_REPOSITORY_URI }}:latest
+
+    - name: Run ECS Task
+      run: |
+            aws ecs run-task \
+            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+            --task-definition ${{ secrets.ECS_TASK_NAME }} \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={assignPublicIp=ENABLED}" \
+            --region ${{ secrets.AWS_REGION }}
+      env:
+           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
