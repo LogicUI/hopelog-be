@@ -4,8 +4,8 @@
 1. Clone the Repository
 
 ```bash
- git clone <repository-url>
- cd <repository-folder>
+ git clone https://github.com/LogicUI/build-with-ai-be.git
+ cd https://github.com/LogicUI/build-with-ai-be.git
 ```
 
 2. Build the Docker Image
