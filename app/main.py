@@ -13,7 +13,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  
+    allow_origins=["http://localhost:3000","https://build-with-ai-hackaton-fe.vercel.app/"],  
     allow_credentials=True,
     allow_methods=["*"],  
     allow_headers=["*"],  
@@ -21,7 +21,6 @@ app.add_middleware(
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_KEY")
-REDIRECT_BASE_URL = os.getenv("REDIRECT_BASE_URL")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 
@@ -72,7 +71,6 @@ def verify_session(token: str):
         return {"is_logged_in": True, "user": user}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    
     
 @app.post("/auth/logout")
 def log_out():
