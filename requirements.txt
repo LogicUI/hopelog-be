@@ -1,1 +1,7 @@
-flask 
+uvicorn
+supabase
+fastapi
+pydantic
+python-dotenv
+python-jose
+fastapi[all]
