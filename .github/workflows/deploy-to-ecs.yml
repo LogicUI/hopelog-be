@@ -34,10 +34,8 @@ jobs:
 
     - name: Build and Push Docker image
       run: |
-        docker buildx build \
-          --platform linux/amd64 \
-          --tag ${{ secrets.ECR_REPOSITORY_URI }}:latest \
-          --push .
+        docker build -t ${{ secrets.ECR_REPOSITORY_URI }}:latest .
+        docker push ${{ secrets.ECR_REPOSITORY_URI }}:latest
 
     - name: Push Docker image to ECR
       run: |
