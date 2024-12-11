@@ -21,6 +21,7 @@ jobs:
       with:
         role-to-assume: arn:aws:iam::471112658624:role/github-role
         aws-region: ${{ secrets.AWS_REGION }}
+        audience: sts.amazonaws.com
 
     - name: Log in to Amazon ECR
       id: ecr-login
