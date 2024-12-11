@@ -32,9 +32,12 @@ jobs:
 
     - name: Build and Push Docker image
       run: |
+        ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}
         docker build -t hopelog:latest .
+        docker tag hopelog:latest $ECR_URI:latest
+        docker push $ECR_URI:latest
         docker push hopelog:latest
-        
+
 
     - name: Run ECS Task
       run: |
