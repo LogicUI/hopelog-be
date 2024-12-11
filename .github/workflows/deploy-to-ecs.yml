@@ -22,6 +22,8 @@ jobs:
         role-to-assume: arn:aws:iam::471112658624:role/github-role
         aws-region: ${{ secrets.AWS_REGION }}
         audience: sts.amazonaws.com
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     - name: Log in to Amazon ECR
       id: ecr-login
@@ -44,6 +46,3 @@ jobs:
             --launch-type FARGATE \
             --network-configuration "awsvpcConfiguration={assignPublicIp=ENABLED}" \
             --region ${{ secrets.AWS_REGION }}
-      env:
-           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
