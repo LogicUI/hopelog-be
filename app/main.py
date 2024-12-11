@@ -33,10 +33,14 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_KEY")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 
+
+
 logger.info("Supabase URL: %s", SUPABASE_URL)
 logger.info("Supabase Key: %s", SUPABASE_ANON_KEY)
 logger.info("Frontend URL: %s", FRONTEND_URL)
 
+if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+    raise ValueError("Supabase URL or Key is missing")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
@@ -110,6 +114,11 @@ async def oauth_login():
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
+@app.get("/")
+def health_check():
+    """Health check endpoint"""
+    return {"status": "ok"}
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(exc: HTTPException):
     """handle HTTP exceptions"""
@@ -125,4 +134,3 @@ async def global_exception_handler(exc: Exception):
         status_code=500,
         content={"detail": f"Unhandled exception: {str(exc)}"},
     )
-
