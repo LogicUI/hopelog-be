@@ -33,10 +33,11 @@ jobs:
     - name: Build and Push Docker image
       run: |
         ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/build-with-ai-hackaton-be
-        echo "ECR_URI is: $ECR_URI"
-        docker build -t hopelog:latest .
-        docker tag hopelog:latest $ECR_URI:latest
-        docker push $ECR_URI:latest
+        docker buildx build \
+                --platform linux/amd64 \
+                --tag ECR_URI:latest \
+                --push .
+
 
 
     - name: Run ECS Task
