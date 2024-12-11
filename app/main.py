@@ -7,6 +7,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client
 from dotenv import load_dotenv
 from pydantic import BaseModel
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,  
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
+)
+
+logger = logging.getLogger("BasicLogger")
+
+
 
 load_dotenv()
 app = FastAPI()
@@ -22,6 +32,10 @@ app.add_middleware(
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_KEY")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
+
+logger.info("Supabase URL: %s", SUPABASE_URL)
+logger.info("Supabase Key: %s", SUPABASE_ANON_KEY)
+logger.info("Frontend URL: %s", FRONTEND_URL)
 
 
 supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -42,6 +56,7 @@ def sign_up(user: User):
                 "email_redirect": f"{FRONTEND_URL}/verify"
             }
         })
+        logger.info("Response %s", str(response))
         return {
             "message": "User signed up successfully. Please check your email for verification",
             "data": response

@@ -37,10 +37,3 @@ jobs:
                 --tag $ECR_URI:latest \
                 --push .
 
-    - name: Run ECS Task
-      run: |
-            aws ecs run-task \
-            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-            --task-definition ${{ secrets.ECS_TASK_NAME }} \
-            --launch-type FARGATE \
-            --region ${{ secrets.AWS_REGION }}
