@@ -36,13 +36,12 @@ jobs:
                 --platform linux/amd64 \
                 --tag $ECR_URI:latest \
                 --push .
-                
+
     - name: Run ECS Task
       run: |
             aws ecs update-service \
             --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
             --service ${{ secrets.ECS_SERVICE_NAME }} \
             --task-definition ${{ secrets.ECS_TASK_NAME }} \
-            --launch-type FARGATE \
             --region ${{ secrets.AWS_REGION }}
 
