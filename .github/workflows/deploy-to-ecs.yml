@@ -29,7 +29,6 @@ jobs:
       id: ecr-login
       uses: aws-actions/amazon-ecr-login@v2
 
-
     - name: Build and Push Docker image
       run: |
         ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/build-with-ai-hackaton-be
@@ -38,13 +37,10 @@ jobs:
                 --tag $ECR_URI:latest \
                 --push .
 
-
-
     - name: Run ECS Task
       run: |
             aws ecs run-task \
             --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
             --task-definition ${{ secrets.ECS_TASK_NAME }} \
             --launch-type FARGATE \
-            --network-configuration "awsvpcConfiguration={assignPublicIp=ENABLED}" \
             --region ${{ secrets.AWS_REGION }}
