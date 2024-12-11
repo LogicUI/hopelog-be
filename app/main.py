@@ -33,8 +33,6 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_KEY")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 
-
-
 logger.info("Supabase URL: %s", SUPABASE_URL)
 logger.info("Supabase Key: %s", SUPABASE_ANON_KEY)
 logger.info("Frontend URL: %s", FRONTEND_URL)
@@ -48,6 +46,11 @@ class User(BaseModel):
     """user class to define the user model"""
     email: str
     password: str
+    
+@app.get("/health")
+def health_check():
+    """Check the health status of the API"""
+    return {"status": "ok"}
 
 @app.post("/auth/signup")
 def sign_up(user: User):
@@ -114,10 +117,7 @@ async def oauth_login():
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-@app.get("/")
-def health_check():
-    """Health check endpoint"""
-    return {"status": "ok"}
+
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(exc: HTTPException):
