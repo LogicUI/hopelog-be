@@ -1,7 +1,7 @@
 """This file contains the FastAPI code for the authentication API. 
 It contains the following endpoints:"""
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client
@@ -16,8 +16,6 @@ logging.basicConfig(
 
 logger = logging.getLogger("BasicLogger")
 
-
-
 load_dotenv()
 app = FastAPI()
 
@@ -28,6 +26,13 @@ app.add_middleware(
     allow_methods=["*"],  
     allow_headers=["*"],  
 )
+
+@app.middleware("http")
+async def log_routes(request: Request, call_next):
+    logging.info("Request: %s %s", request.method, request.url.path)
+    response = await call_next(request)
+    return response
+
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_KEY")
@@ -47,9 +52,16 @@ class User(BaseModel):
     email: str
     password: str
     
+@app.get("/")
+def health():
+    """Check the health status of the API"""
+    logger.info("Health check")
+    return {"status": "ok"}
+    
 @app.get("/health")
 def health_check():
     """Check the health status of the API"""
+    logger.info("Health check")
     return {"status": "ok"}
 
 @app.post("/auth/signup")
