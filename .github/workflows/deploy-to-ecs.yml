@@ -66,4 +66,37 @@ jobs:
              --task-definition $NEW_TASK_ARN \
              --force-new-deployment \
               --region ${{ secrets.AWS_REGION }}
-              
+
+
+
+    - name: Update Target Group with New Container IP
+      run: |
+          # Step 1: Get the latest task ARN
+            TASK_ARN=$(aws ecs list-tasks \
+               --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+               --service-name ${{ secrets.ECS_SERVICE_NAME }} \
+               --region ${{ secrets.AWS_REGION }} \
+               | jq -r '.taskArns[0]')
+        
+          # Step 2: Get the ENI ID of the task
+             ENI_ID=$(aws ecs describe-tasks \
+                 --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+                 --tasks $TASK_ARN \
+                 --region ${{ secrets.AWS_REGION }} \
+                | jq -r '.tasks[0].attachments[0].details[] | select(.name=="networkInterfaceId") | .value')
+        
+           # Step 3: Get the container's private IP address
+             PRIVATE_IP=$(aws ec2 describe-network-interfaces \
+                  --network-interface-ids $ENI_ID \
+                  --region ${{ secrets.AWS_REGION }} \
+                  | jq -r '.NetworkInterfaces[0].PrivateIpAddress')
+        
+             echo "Container Private IP: $PRIVATE_IP"
+        
+             # Step 4: Register the IP with the Target Group
+               aws elbv2 register-targets \
+              --target-group-arn ${{ secrets.AWS_TARGET_GROUP_ARN}} \
+              --targets Id=$PRIVATE_IP \
+              --region ${{ secrets.AWS_REGION }}
+           
+             
