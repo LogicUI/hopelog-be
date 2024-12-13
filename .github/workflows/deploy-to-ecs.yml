@@ -37,25 +37,33 @@ jobs:
                 --tag $ECR_URI:latest \
                 --push .
 
+
+
     - name: Update ECS Service to Deploy New Image
       run: |
-        NEW_TASK_DEFINITION=$(aws ecs describe-task-definition \
+          # Retrieve the current task definition and remove invalid fields
+          NEW_TASK_DEFINITION=$(aws ecs describe-task-definition \
           --task-definition ${{ secrets.ECS_TASK_NAME }} \
-          --region ${{ secrets.AWS_REGION }} | jq '.taskDefinition | del(.status, .revision, .taskDefinitionArn)')
-
-        UPDATED_TASK_DEFINITION=$(echo $NEW_TASK_DEFINITION | jq '.containerDefinitions[0].image = "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/build-with-ai-hackaton-be:latest"')
-
-        REGISTERED_TASK_DEFINITION=$(aws ecs register-task-definition \
-          --region ${{ secrets.AWS_REGION }} \
-          --cli-input-json "$UPDATED_TASK_DEFINITION")
-
-        NEW_TASK_ARN=$(echo $REGISTERED_TASK_DEFINITION | jq -r '.taskDefinition.taskDefinitionArn')
-
-        aws ecs update-service \
-          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-          --service ${{ secrets.ECS_SERVICE_NAME }} \
-          --task-definition $NEW_TASK_ARN \
-          --force-new-deployment \
-          --region ${{ secrets.AWS_REGION }}
-
-
+          --region ${{ secrets.AWS_REGION }} | jq '.taskDefinition | 
+            del(.status, .revision, .taskDefinitionArn, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+              
+          # Update the image in the task definition
+            UPDATED_TASK_DEFINITION=$(echo $NEW_TASK_DEFINITION | jq \
+           '.containerDefinitions[0].image = "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/build-with-ai-hackaton-be:latest"')
+              
+          # Register the updated task definition
+            REGISTERED_TASK_DEFINITION=$(aws ecs register-task-definition \
+            --region ${{ secrets.AWS_REGION }} \
+            --cli-input-json "$UPDATED_TASK_DEFINITION")
+              
+          # Extract the ARN of the new task definition
+            NEW_TASK_ARN=$(echo $REGISTERED_TASK_DEFINITION | jq -r '.taskDefinition.taskDefinitionArn')
+              
+          # Update the ECS service to use the new task definition
+            aws ecs update-service \
+             --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+             --service ${{ secrets.ECS_SERVICE_NAME }} \
+             --task-definition $NEW_TASK_ARN \
+             --force-new-deployment \
+              --region ${{ secrets.AWS_REGION }}
+              
