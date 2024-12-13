@@ -96,7 +96,7 @@ jobs:
              # Step 4: Register the IP with the Target Group
                aws elbv2 register-targets \
               --target-group-arn ${{ secrets.AWS_TARGET_GROUP_ARN}} \
-              --targets Id=$PRIVATE_IP \
+              --targets Id=$PRIVATE_IP,Port=5000 \
               --region ${{ secrets.AWS_REGION }}
            
              
