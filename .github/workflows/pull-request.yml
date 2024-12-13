@@ -1,0 +1,28 @@
+name: Docker Build Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'feature/**' # Adjust branches as needed
+
+jobs:
+  docker-build:
+    name: Build and Test Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses:  actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t local-docker-image:test .
+
+      - name: Test Docker container
+        run: |
+          docker run --rm local-docker-image:test echo "Docker build and run succeeded!"
+
+      - name: Clean up Docker resources
+        run: |
+          docker rmi -f local-docker-image:test || true
