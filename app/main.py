@@ -38,10 +38,6 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_KEY")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 
-logger.info("Supabase URL: %s", SUPABASE_URL)
-logger.info("Supabase Key: %s", SUPABASE_ANON_KEY)
-logger.info("Frontend URL: %s", FRONTEND_URL)
-
 if not SUPABASE_URL or not SUPABASE_ANON_KEY:
     raise ValueError("Supabase URL or Key is missing")
 

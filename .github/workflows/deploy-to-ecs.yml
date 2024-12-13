@@ -37,11 +37,25 @@ jobs:
                 --tag $ECR_URI:latest \
                 --push .
 
-    - name: Run ECS Task
+    - name: Update ECS Service to Deploy New Image
       run: |
-            aws ecs update-service \
-            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-            --service ${{ secrets.ECS_SERVICE_NAME }} \
-            --task-definition ${{ secrets.ECS_TASK_NAME }} \
-            --region ${{ secrets.AWS_REGION }}
+        NEW_TASK_DEFINITION=$(aws ecs describe-task-definition \
+          --task-definition ${{ secrets.ECS_TASK_NAME }} \
+          --region ${{ secrets.AWS_REGION }} | jq '.taskDefinition | del(.status, .revision, .taskDefinitionArn)')
+
+        UPDATED_TASK_DEFINITION=$(echo $NEW_TASK_DEFINITION | jq '.containerDefinitions[0].image = "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/build-with-ai-hackaton-be:latest"')
+
+        REGISTERED_TASK_DEFINITION=$(aws ecs register-task-definition \
+          --region ${{ secrets.AWS_REGION }} \
+          --cli-input-json "$UPDATED_TASK_DEFINITION")
+
+        NEW_TASK_ARN=$(echo $REGISTERED_TASK_DEFINITION | jq -r '.taskDefinition.taskDefinitionArn')
+
+        aws ecs update-service \
+          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+          --service ${{ secrets.ECS_SERVICE_NAME }} \
+          --task-definition $NEW_TASK_ARN \
+          --force-new-deployment \
+          --region ${{ secrets.AWS_REGION }}
+
 
