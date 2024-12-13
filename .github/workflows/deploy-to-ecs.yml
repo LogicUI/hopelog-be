@@ -37,8 +37,6 @@ jobs:
                 --tag $ECR_URI:latest \
                 --push .
 
-
-
     - name: Update ECS Service to Deploy New Image
       run: |
           # Retrieve the current task definition and remove invalid fields
@@ -66,8 +64,6 @@ jobs:
              --task-definition $NEW_TASK_ARN \
              --force-new-deployment \
               --region ${{ secrets.AWS_REGION }}
-
-
 
     - name: Update Target Group with New Container IP
       run: |
@@ -99,4 +95,21 @@ jobs:
               --targets Id=$PRIVATE_IP,Port=5000 \
               --region ${{ secrets.AWS_REGION }}
            
-             
+    - name: Remove Unhealthy Targets
+      run: |
+            # Fetch unhealthy targets from the Target Group
+             UNHEALTHY_TARGETS=$(aws elbv2 describe-target-health \
+              --target-group-arn ${{ secrets.AWS_TARGET_GROUP_ARN }} \
+                      --region ${{ secrets.AWS_REGION }} \
+                      | jq -r '.TargetHealthDescriptions[] | select(.TargetHealth.State=="unhealthy") | .Target.Id')
+                  
+            # Loop through and deregister each unhealthy target
+              for TARGET in $UNHEALTHY_TARGETS; do
+               echo "Deregistering unhealthy target: $TARGET"
+                aws elbv2 deregister-targets \
+                    --target-group-arn ${{ secrets.AWS_TARGET_GROUP_ARN }} \
+                    --targets Id=$TARGET \
+                  --region ${{ secrets.AWS_REGION }}
+              done
+            
+             echo "Unhealthy targets removed successfully."
