@@ -1,13 +1,14 @@
 """This file contains the FastAPI code for the authentication API. 
 It contains the following endpoints:"""
 import os
+import logging
+from models.user import User
+from models.signIn import SignIn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from supabase import create_client
+from supabase import create_client, AuthError, AuthApiError
 from dotenv import load_dotenv
-from pydantic import BaseModel
-import logging
 
 logging.basicConfig(
     level=logging.INFO,  
@@ -42,11 +43,6 @@ if not SUPABASE_URL or not SUPABASE_ANON_KEY:
     raise ValueError("Supabase URL or Key is missing")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-
-class User(BaseModel):
-    """user class to define the user model"""
-    email: str
-    password: str
     
 @app.get("/")
 def health():
@@ -60,6 +56,7 @@ def health_check():
     logger.info("Health check")
     return {"status": "ok"}
 
+
 @app.post("/auth/signup")
 def sign_up(user: User):
     """used to sign up a user"""
@@ -68,7 +65,10 @@ def sign_up(user: User):
             "email": user.email,
             "password": user.password,
             "options": {
-                "email_redirect": f"{FRONTEND_URL}/verify"
+                "data": {
+                    "name": user.name,
+                    "age": user.age
+                }
             }
         })
         logger.info("Response %s", str(response))
@@ -76,12 +76,16 @@ def sign_up(user: User):
             "message": "User signed up successfully. Please check your email for verification",
             "data": response
         }
+    except AuthApiError as e:
+        raise HTTPException(status_code=400, detail="Supabase API error: " + str(e)) from e
+    except AuthError as e:
+        raise HTTPException(status_code=400, detail="Supabase Auth error: " + str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        raise HTTPException(status_code=500, detail="Internal server error: " + str(e)) from e
 
 @app.post("/auth/signin")
-def sign_in(user: User):
-    """"used to sign in a user"""
+def sign_in(user: SignIn):
+    """used to sign in a user"""
     try:
         response = supabase.auth.sign_in_with_password({
             "email": user.email,
@@ -93,15 +97,17 @@ def sign_in(user: User):
     
 @app.get("/auth/verify")
 def verify_session(token: str):
-    """used to verify a user's session"""
+    if not token or token is None:
+        return {"is_logged_in": False, "message": "Session expired or invalid"}
     try:
-        user = supabase.auth.get_user(token)
-        if not user:
-            return {"is_logged_in": False, "message": "Session expired or invalid"}
-        return {"is_logged_in": True, "user": user}
+        user_response = supabase.auth.get_user(token)
+        return {
+            "is_logged_in": True,
+            "user": user_response 
+        }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    
+
 @app.post("/auth/logout")
 def log_out():
     """used to log out a user"""
@@ -128,16 +134,17 @@ async def oauth_login():
 
 
 @app.exception_handler(HTTPException)
-async def http_exception_handler(exc: HTTPException):
-    """handle HTTP exceptions"""
+async def http_exception_handler(request: Request, exc: HTTPException):
+    logger.error("Unhandled http exception: %s at %s", exc, request.url)
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail},
     )
 
+
 @app.exception_handler(Exception)
-async def global_exception_handler(exc: Exception):
-    """handle global exceptions"""
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled exception: %s at %s", exc, request.url)
     return JSONResponse(
         status_code=500,
         content={"detail": f"Unhandled exception: {str(exc)}"},
