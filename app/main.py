@@ -2,9 +2,14 @@
 It contains the following endpoints:"""
 import os
 import logging
+import secrets
+import hashlib
+import base64
+
 from models.user import User
 from models.signIn import SignIn
-from fastapi import FastAPI, HTTPException, Request
+from typing import Optional
+from fastapi import FastAPI, HTTPException, Request, Header
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client, AuthError, AuthApiError
@@ -22,7 +27,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000","https://build-with-ai-hackaton-fe.vercel.app/"],  
+    allow_origins=["http://localhost:3000","https://build-with-ai-hackaton-fe.vercel.app/", "https://build-with-ai-hackaton-fe.vercel.app"],  
     allow_credentials=True,
     allow_methods=["*"],  
     allow_headers=["*"],  
@@ -43,6 +48,14 @@ if not SUPABASE_URL or not SUPABASE_ANON_KEY:
     raise ValueError("Supabase URL or Key is missing")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+
+def generate_code_verifier():
+    return secrets.token_urlsafe(64)  
+
+def generate_code_challenge(code_verifier):
+    sha256_hash = hashlib.sha256(code_verifier.encode()).digest()
+    return base64.urlsafe_b64encode(sha256_hash).decode('utf-8').rstrip("=")
     
 @app.get("/")
 def health():
@@ -96,9 +109,10 @@ def sign_in(user: SignIn):
         raise HTTPException(status_code=400, detail=str(e)) from e
     
 @app.get("/auth/verify")
-def verify_session(token: str):
-    if not token or token is None:
-        return {"is_logged_in": False, "message": "Session expired or invalid"}
+def verify_session(authorization: Optional[str] = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        return {"is_logged_in": False, "message": "Authorization header missing or invalid"}
+    token = authorization.split(" ")[1]
     try:
         user_response = supabase.auth.get_user(token)
         return {
@@ -116,21 +130,6 @@ def log_out():
         return {"message": "User logged out successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-
-@app.get("/auth/oauth-login")
-async def oauth_login():
-    """used to log in a user via OAuth"""
-    try:
-        response = supabase.auth.sign_in_with_oauth({
-                "provider": 'google',
-                "options": {
-                    "redirect_to": f"{FRONTEND_URL}"
-                }
-            })
-        return {"message": "User signed in successfully", "data": response}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-
 
 
 @app.exception_handler(HTTPException)
