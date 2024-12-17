@@ -3,7 +3,9 @@ name: Deploy to ECS
 on:
     push:
       paths:
-        - "**.py" 
+        - "**.py"
+      paths-ignore:
+        - "agents/**"
       branches:
         - main 
     workflow_dispatch:
