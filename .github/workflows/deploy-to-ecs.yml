@@ -29,7 +29,7 @@ jobs:
       id: ecr-login
       uses: aws-actions/amazon-ecr-login@v2
 
-    - name: Build and Push Docker images
+    - name: Build and Push Docker Images
       run: |
         APP_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/hopelog-dev-backend
         REDIS_IMAGE=redis:latest
@@ -38,84 +38,123 @@ jobs:
         docker build -t $APP_IMAGE:latest .
         docker push $APP_IMAGE:latest
 
-        # Pull the Redis image
+        # Pull the Redis image (optional for validation or custom Redis builds)
         docker pull $REDIS_IMAGE
 
     - name: Update ECS Task Definitions
       run: |
+        # Update Application Task Definition
+        echo "Updating Application Task Definition..."
         NEW_TASK_DEFINITION=$(aws ecs describe-task-definition \
-        --task-definition ${{ secrets.ECS_TASK_NAME }} \
-        --region ${{ secrets.AWS_REGION }} | jq '.taskDefinition | 
-          del(.status, .revision, .taskDefinitionArn, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
-              
+          --task-definition ${{ secrets.ECS_TASK_NAME }} \
+          --region ${{ secrets.AWS_REGION }} | jq '.taskDefinition | 
+            del(.status, .revision, .taskDefinitionArn, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+
         UPDATED_TASK_DEFINITION=$(echo $NEW_TASK_DEFINITION | jq \
-        '.containerDefinitions[0].image = "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/hopelog-dev-backend:latest"')
-              
+          '.containerDefinitions[0].image = "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/hopelog-dev-backend:latest"')
+
         REGISTERED_TASK_DEFINITION=$(aws ecs register-task-definition \
-        --region ${{ secrets.AWS_REGION }} \
-        --cli-input-json "$UPDATED_TASK_DEFINITION")
+          --region ${{ secrets.AWS_REGION }} \
+          --cli-input-json "$UPDATED_TASK_DEFINITION")
 
         APP_TASK_ARN=$(echo $REGISTERED_TASK_DEFINITION | jq -r '.taskDefinition.taskDefinitionArn')
-              
+
+        if [ -z "$APP_TASK_ARN" ]; then
+          echo "Error: Application Task ARN not found. Exiting."
+          exit 1
+        fi
+        echo "Application Task ARN: $APP_TASK_ARN"
+
+        # Create Redis Task Definition
+        echo "Creating Redis Task Definition..."
         REDIS_TASK_DEFINITION=$(aws ecs register-task-definition \
-        --family redis-task \
-        --container-definitions '[{
-            "name": "redis",
-            "image": "redis:latest",
-            "memory": 512,
-            "cpu": 256,
-            "essential": true,
-            "portMappings": [{
-              "containerPort": 6379,
-              "hostPort": 6379
-            }]
-        }]'
-        --region ${{ secrets.AWS_REGION }})
+          --family redis-task \
+          --container-definitions '[{
+              "name": "redis",
+              "image": "redis:latest",
+              "memory": 512,
+              "cpu": 256,
+              "essential": true,
+              "portMappings": [{
+                "containerPort": 6379,
+                "hostPort": 6379
+              }]
+          }]' \
+          --region ${{ secrets.AWS_REGION }})
 
         REDIS_TASK_ARN=$(echo $REDIS_TASK_DEFINITION | jq -r '.taskDefinition.taskDefinitionArn')
 
+        if [ -z "$REDIS_TASK_ARN" ]; then
+          echo "Error: Redis Task ARN not found. Exiting."
+          exit 1
+        fi
+        echo "Redis Task ARN: $REDIS_TASK_ARN"
+
     - name: Update ECS Services
       run: |
+        echo "Updating Application Service..."
         aws ecs update-service \
-        --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-        --service ${{ secrets.ECS_SERVICE_NAME }} \
-        --task-definition $APP_TASK_ARN \
-        --force-new-deployment \
-        --region ${{ secrets.AWS_REGION }}
+          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+          --service ${{ secrets.ECS_SERVICE_NAME }} \
+          --task-definition $APP_TASK_ARN \
+          --force-new-deployment \
+          --region ${{ secrets.AWS_REGION }}
 
+        echo "Creating Redis Service..."
         aws ecs create-service \
-        --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-        --service-name redis-service \
-        --task-definition $REDIS_TASK_ARN \
-        --desired-count 1 \
-        --launch-type FARGATE \
-        --region ${{ secrets.AWS_REGION }}
+          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+          --service-name redis-service \
+          --task-definition $REDIS_TASK_ARN \
+          --desired-count 1 \
+          --launch-type FARGATE \
+          --region ${{ secrets.AWS_REGION }}
 
     - name: Configure Environment Variables
       run: |
-        REDIS_HOST=$(aws ecs describe-tasks \
-        --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-        --tasks $(aws ecs list-tasks --cluster ${{ secrets.ECS_CLUSTER_NAME }} --service-name redis-service --region ${{ secrets.AWS_REGION }} | jq -r '.taskArns[0]') \
-        --region ${{ secrets.AWS_REGION }} | jq -r '.tasks[0].containers[0].networkInterfaces[0].privateIpv4Address')
+        echo "Fetching Redis Host..."
+        REDIS_TASK_ARN=$(aws ecs list-tasks \
+          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+          --service-name redis-service \
+          --region ${{ secrets.AWS_REGION }} | jq -r '.taskArns[0]')
 
-        echo "Redis host: $REDIS_HOST"
+        REDIS_HOST=$(aws ecs describe-tasks \
+          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+          --tasks "$REDIS_TASK_ARN" \
+          --region ${{ secrets.AWS_REGION }} | jq -r '.tasks[0].containers[0].networkInterfaces[0].privateIpv4Address')
+
+        if [ -z "$REDIS_HOST" ]; then
+          echo "Error: Redis Host not found. Exiting."
+          exit 1
+        fi
+        echo "Redis Host: $REDIS_HOST"
+
+        echo "Updating Application Environment Variables..."
+        UPDATED_TASK_DEFINITION=$(aws ecs describe-task-definition \
+          --task-definition ${{ secrets.ECS_TASK_NAME }} \
+          --region ${{ secrets.AWS_REGION }} | jq \
+          '.taskDefinition.containerDefinitions[0].environment += [{"name": "REDIS_HOST", "value": "'$REDIS_HOST'"}]')
+
+        REGISTERED_TASK=$(aws ecs register-task-definition \
+          --region ${{ secrets.AWS_REGION }} \
+          --cli-input-json "$UPDATED_TASK_DEFINITION")
+
+        NEW_APP_TASK_ARN=$(echo $REGISTERED_TASK | jq -r '.taskDefinition.taskDefinitionArn')
 
         aws ecs update-service \
-        --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-        --service-name ${{ secrets.ECS_SERVICE_NAME }} \
-        --task-definition $APP_TASK_ARN \
-        --region ${{ secrets.AWS_REGION }} \
-        --cli-input-json "{\"environment\": [{\"name\": \"REDIS_HOST\", \"value\": \"$REDIS_HOST\"}]}"
+          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+          --service-name ${{ secrets.ECS_SERVICE_NAME }} \
+          --task-definition $NEW_APP_TASK_ARN \
+          --force-new-deployment \
+          --region ${{ secrets.AWS_REGION }}
 
     - name: Remove Unhealthy Targets
       run: |
-        # Fetch unhealthy targets from the Target Group
+        echo "Removing Unhealthy Targets..."
         UNHEALTHY_TARGETS=$(aws elbv2 describe-target-health \
-        --target-group-arn ${{ secrets.AWS_TARGET_GROUP_ARN }} \
-        --region ${{ secrets.AWS_REGION }} \
-        | jq -r '.TargetHealthDescriptions[] | select(.TargetHealth.State=="unhealthy") | .Target.Id')
-                  
-        # Loop through and deregister each unhealthy target
+          --target-group-arn ${{ secrets.AWS_TARGET_GROUP_ARN }} \
+          --region ${{ secrets.AWS_REGION }} \
+          | jq -r '.TargetHealthDescriptions[] | select(.TargetHealth.State=="unhealthy") | .Target.Id')
+
         for TARGET in $UNHEALTHY_TARGETS; do
           echo "Deregistering unhealthy target: $TARGET"
           aws elbv2 deregister-targets \
@@ -123,6 +162,5 @@ jobs:
             --targets Id=$TARGET \
             --region ${{ secrets.AWS_REGION }}
         done
-            
-        echo "Unhealthy targets removed successfully."
 
+        echo "Unhealthy targets removed successfully."
