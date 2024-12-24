@@ -1,12 +1,13 @@
 name: Deploy to ECS
 
 on:
-    push:
-      paths-ignore:
-        - "agents/**"
-      branches:
-        - main 
-    workflow_dispatch:
+  push:
+    paths-ignore:
+      - "agents/**"
+    branches:
+      - main
+  workflow_dispatch:
+
 jobs:
   deploy:
     name: Build, Push to ECR, and Deploy to ECS
@@ -21,7 +22,6 @@ jobs:
       with:
         role-to-assume: arn:aws:iam::471112658624:role/github-role
         aws-region: ${{ secrets.AWS_REGION }}
-        audience: sts.amazonaws.com
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -29,24 +29,107 @@ jobs:
       id: ecr-login
       uses: aws-actions/amazon-ecr-login@v2
 
-    - name: Build and Push Docker image
+    - name: Build and Push Docker images
       run: |
         APP_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/hopelog-dev-backend
+        REDIS_IMAGE=redis:latest
 
+        # Build and push the application image
         docker build -t $APP_IMAGE:latest .
         docker push $APP_IMAGE:latest
 
-    - name: Deploy to ECS
+        # Pull the Redis image
+        docker pull $REDIS_IMAGE
+
+    - name: Update ECS Task Definitions
       run: |
-          echo "Deploying to ECS using Docker Compose..."
+        # Update Application Task Definition
+        NEW_TASK_DEFINITION=$(aws ecs describe-task-definition \
+          --task-definition ${{ secrets.ECS_TASK_NAME }} \
+          --region ${{ secrets.AWS_REGION }} | jq '.taskDefinition | 
+            del(.status, .revision, .taskDefinitionArn, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+              
+        UPDATED_TASK_DEFINITION=$(echo $NEW_TASK_DEFINITION | jq \
+          '.containerDefinitions[0].image = "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/hopelog-dev-backend:latest"')
+              
+        REGISTERED_TASK_DEFINITION=$(aws ecs register-task-definition \
+          --region ${{ secrets.AWS_REGION }} \
+          --cli-input-json "$UPDATED_TASK_DEFINITION")
 
-          curl -L https://raw.githubusercontent.com/docker/compose-cli/main/scripts/install/install_linux.sh | sh
+        # Extract the ARN of the new application task definition
+        APP_TASK_ARN=$(echo $REGISTERED_TASK_DEFINITION | jq -r '.taskDefinition.taskDefinitionArn')
+              
+        # Update Redis Task Definition (if using a custom configuration)
+        REDIS_TASK_DEFINITION=$(aws ecs register-task-definition \
+          --family redis-task \
+          --container-definitions '[{
+            "name": "redis",
+            "image": "redis:latest",
+            "memory": 512,
+            "cpu": 256,
+            "essential": true,
+            "portMappings": [{
+              "containerPort": 6379,
+              "hostPort": 6379
+            }]
+          }]'
+          --region ${{ secrets.AWS_REGION }})
 
-          docker context create ecs my-ecs-context
+        REDIS_TASK_ARN=$(echo $REDIS_TASK_DEFINITION | jq -r '.taskDefinition.taskDefinitionArn')
 
-          docker context use my-ecs-context
+    - name: Update ECS Services
+      run: |
+        # Update the application service
+        aws ecs update-service \
+          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+          --service ${{ secrets.ECS_SERVICE_NAME }} \
+          --task-definition $APP_TASK_ARN \
+          --force-new-deployment \
+          --region ${{ secrets.AWS_REGION }}
 
-          APP_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/hopelog-dev-backend
+        # Deploy Redis as a service (if not already running)
+        aws ecs create-service \
+          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+          --service-name redis-service \
+          --task-definition $REDIS_TASK_ARN \
+          --desired-count 1 \
+          --launch-type FARGATE \
+          --region ${{ secrets.AWS_REGION }}
 
-          docker compose --file docker-compose.yml up
+    - name: Configure Environment Variables
+      run: |
+        # Update Application Service to include Redis endpoint
+        REDIS_HOST=$(aws ecs describe-tasks \
+          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+          --tasks $(aws ecs list-tasks --cluster ${{ secrets.ECS_CLUSTER_NAME }} --service-name redis-service --region ${{ secrets.AWS_REGION }} | jq -r '.taskArns[0]') \
+          --region ${{ secrets.AWS_REGION }} | jq -r '.tasks[0].containers[0].networkInterfaces[0].privateIpv4Address')
+
+        echo "Redis host: $REDIS_HOST"
+
+        # Include Redis host in Application's environment variables
+        aws ecs update-service \
+          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+          --service-name ${{ secrets.ECS_SERVICE_NAME }} \
+          --task-definition $APP_TASK_ARN \
+          --region ${{ secrets.AWS_REGION }} \
+          --cli-input-json "{\"environment\": [{\"name\": \"REDIS_HOST\", \"value\": \"$REDIS_HOST\"}]}"
+          
+    - name: Remove Unhealthy Targets
+      run: |
+        # Fetch unhealthy targets from the Target Group
+        UNHEALTHY_TARGETS=$(aws elbv2 describe-target-health \
+          --target-group-arn ${{ secrets.AWS_TARGET_GROUP_ARN }} \
+          --region ${{ secrets.AWS_REGION }} \
+          | jq -r '.TargetHealthDescriptions[] | select(.TargetHealth.State=="unhealthy") | .Target.Id')
+                  
+        # Loop through and deregister each unhealthy target
+        for TARGET in $UNHEALTHY_TARGETS; do
+          echo "Deregistering unhealthy target: $TARGET"
+          aws elbv2 deregister-targets \
+            --target-group-arn ${{ secrets.AWS_TARGET_GROUP_ARN }} \
+            --targets Id=$TARGET \
+            --region ${{ secrets.AWS_REGION }}
+        done
+            
+        echo "Unhealthy targets removed successfully."
 
