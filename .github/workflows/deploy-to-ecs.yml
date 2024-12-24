@@ -90,10 +90,9 @@ jobs:
         fi
         echo "Redis Task ARN: $REDIS_TASK_ARN"
 
-    - name: Update ECS Services
-      run: |
-        echo "Updating Application Service..."
+              echo "Updating Application Service..."
         echo "App Task ARN: $APP_TASK_ARN"
+        
         aws ecs update-service \
           --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
           --service ${{ secrets.ECS_SERVICE_NAME }} \
@@ -109,6 +108,7 @@ jobs:
           --desired-count 1 \
           --launch-type FARGATE \
           --region ${{ secrets.AWS_REGION }}
+  
 
     - name: Configure Environment Variables
       run: |
