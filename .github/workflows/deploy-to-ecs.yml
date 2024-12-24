@@ -48,7 +48,6 @@ jobs:
           --task-definition ${{ secrets.ECS_TASK_NAME }} \
           --region ${{ secrets.AWS_REGION }} | jq '.taskDefinition | 
             del(.status, .revision, .taskDefinitionArn, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy) |
-            .networkMode = "awsvpc" |
             .cpu = "256" |
             .memory = "512"')
 
@@ -71,7 +70,6 @@ jobs:
         echo "Creating Redis Task Definition..."
         REDIS_TASK_DEFINITION=$(aws ecs register-task-definition \
           --family redis-task \
-          --network-mode "awsvpc" \
           --cpu "256" \
           --memory "512" \
           --container-definitions '[{
