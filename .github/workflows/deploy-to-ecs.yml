@@ -48,6 +48,7 @@ jobs:
           --task-definition ${{ secrets.ECS_TASK_NAME }} \
           --region ${{ secrets.AWS_REGION }} | jq '.taskDefinition | 
             del(.status, .revision, .taskDefinitionArn, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy) |
+            .requiresCompatibilities = ["FARGATE"] |
             .cpu = "256" |
             .memory = "512"')
 
@@ -72,6 +73,7 @@ jobs:
           --family redis-task \
           --cpu "256" \
           --memory "512" \
+          --requires-compatibilities ["FARGATE"] \
           --container-definitions '[{
               "name": "redis",
               "image": "redis:latest",
