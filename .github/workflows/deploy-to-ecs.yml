@@ -2,8 +2,6 @@ name: Deploy to ECS
 
 on:
     push:
-      paths:
-        - "**.py"
       paths-ignore:
         - "agents/**"
       branches:
