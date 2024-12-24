@@ -43,26 +43,23 @@ jobs:
 
     - name: Update ECS Task Definitions
       run: |
-        # Update Application Task Definition
         NEW_TASK_DEFINITION=$(aws ecs describe-task-definition \
-          --task-definition ${{ secrets.ECS_TASK_NAME }} \
-          --region ${{ secrets.AWS_REGION }} | jq '.taskDefinition | 
-            del(.status, .revision, .taskDefinitionArn, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+        --task-definition ${{ secrets.ECS_TASK_NAME }} \
+        --region ${{ secrets.AWS_REGION }} | jq '.taskDefinition | 
+          del(.status, .revision, .taskDefinitionArn, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
               
         UPDATED_TASK_DEFINITION=$(echo $NEW_TASK_DEFINITION | jq \
-          '.containerDefinitions[0].image = "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/hopelog-dev-backend:latest"')
+        '.containerDefinitions[0].image = "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/hopelog-dev-backend:latest"')
               
         REGISTERED_TASK_DEFINITION=$(aws ecs register-task-definition \
-          --region ${{ secrets.AWS_REGION }} \
-          --cli-input-json "$UPDATED_TASK_DEFINITION")
+        --region ${{ secrets.AWS_REGION }} \
+        --cli-input-json "$UPDATED_TASK_DEFINITION")
 
-        # Extract the ARN of the new application task definition
         APP_TASK_ARN=$(echo $REGISTERED_TASK_DEFINITION | jq -r '.taskDefinition.taskDefinitionArn')
               
-        # Update Redis Task Definition (if using a custom configuration)
         REDIS_TASK_DEFINITION=$(aws ecs register-task-definition \
-          --family redis-task \
-          --container-definitions '[{
+        --family redis-task \
+        --container-definitions '[{
             "name": "redis",
             "image": "redis:latest",
             "memory": 512,
@@ -72,55 +69,51 @@ jobs:
               "containerPort": 6379,
               "hostPort": 6379
             }]
-          }]'
-          --region ${{ secrets.AWS_REGION }})
+        }]'
+        --region ${{ secrets.AWS_REGION }})
 
         REDIS_TASK_ARN=$(echo $REDIS_TASK_DEFINITION | jq -r '.taskDefinition.taskDefinitionArn')
 
     - name: Update ECS Services
       run: |
-        # Update the application service
         aws ecs update-service \
-          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-          --service ${{ secrets.ECS_SERVICE_NAME }} \
-          --task-definition $APP_TASK_ARN \
-          --force-new-deployment \
-          --region ${{ secrets.AWS_REGION }}
+        --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+        --service ${{ secrets.ECS_SERVICE_NAME }} \
+        --task-definition $APP_TASK_ARN \
+        --force-new-deployment \
+        --region ${{ secrets.AWS_REGION }}
 
-        # Deploy Redis as a service (if not already running)
         aws ecs create-service \
-          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-          --service-name redis-service \
-          --task-definition $REDIS_TASK_ARN \
-          --desired-count 1 \
-          --launch-type FARGATE \
-          --region ${{ secrets.AWS_REGION }}
+        --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+        --service-name redis-service \
+        --task-definition $REDIS_TASK_ARN \
+        --desired-count 1 \
+        --launch-type FARGATE \
+        --region ${{ secrets.AWS_REGION }}
 
     - name: Configure Environment Variables
       run: |
-        # Update Application Service to include Redis endpoint
         REDIS_HOST=$(aws ecs describe-tasks \
-          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-          --tasks $(aws ecs list-tasks --cluster ${{ secrets.ECS_CLUSTER_NAME }} --service-name redis-service --region ${{ secrets.AWS_REGION }} | jq -r '.taskArns[0]') \
-          --region ${{ secrets.AWS_REGION }} | jq -r '.tasks[0].containers[0].networkInterfaces[0].privateIpv4Address')
+        --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+        --tasks $(aws ecs list-tasks --cluster ${{ secrets.ECS_CLUSTER_NAME }} --service-name redis-service --region ${{ secrets.AWS_REGION }} | jq -r '.taskArns[0]') \
+        --region ${{ secrets.AWS_REGION }} | jq -r '.tasks[0].containers[0].networkInterfaces[0].privateIpv4Address')
 
         echo "Redis host: $REDIS_HOST"
 
-        # Include Redis host in Application's environment variables
         aws ecs update-service \
-          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-          --service-name ${{ secrets.ECS_SERVICE_NAME }} \
-          --task-definition $APP_TASK_ARN \
-          --region ${{ secrets.AWS_REGION }} \
-          --cli-input-json "{\"environment\": [{\"name\": \"REDIS_HOST\", \"value\": \"$REDIS_HOST\"}]}"
-          
+        --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+        --service-name ${{ secrets.ECS_SERVICE_NAME }} \
+        --task-definition $APP_TASK_ARN \
+        --region ${{ secrets.AWS_REGION }} \
+        --cli-input-json "{\"environment\": [{\"name\": \"REDIS_HOST\", \"value\": \"$REDIS_HOST\"}]}"
+
     - name: Remove Unhealthy Targets
       run: |
         # Fetch unhealthy targets from the Target Group
         UNHEALTHY_TARGETS=$(aws elbv2 describe-target-health \
-          --target-group-arn ${{ secrets.AWS_TARGET_GROUP_ARN }} \
-          --region ${{ secrets.AWS_REGION }} \
-          | jq -r '.TargetHealthDescriptions[] | select(.TargetHealth.State=="unhealthy") | .Target.Id')
+        --target-group-arn ${{ secrets.AWS_TARGET_GROUP_ARN }} \
+        --region ${{ secrets.AWS_REGION }} \
+        | jq -r '.TargetHealthDescriptions[] | select(.TargetHealth.State=="unhealthy") | .Target.Id')
                   
         # Loop through and deregister each unhealthy target
         for TARGET in $UNHEALTHY_TARGETS; do
