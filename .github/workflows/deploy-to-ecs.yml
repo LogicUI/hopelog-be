@@ -93,6 +93,7 @@ jobs:
     - name: Update ECS Services
       run: |
         echo "Updating Application Service..."
+        echo "App Task ARN: $APP_TASK_ARN"
         aws ecs update-service \
           --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
           --service ${{ secrets.ECS_SERVICE_NAME }} \
@@ -117,6 +118,11 @@ jobs:
           --service-name redis-service \
           --region ${{ secrets.AWS_REGION }} | jq -r '.taskArns[0]')
 
+        if [ -z "$REDIS_TASK_ARN" ]; then
+          echo "Error: Redis Task ARN not found. Exiting."
+          exit 1
+        fi
+
         REDIS_HOST=$(aws ecs describe-tasks \
           --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
           --tasks "$REDIS_TASK_ARN" \
@@ -132,35 +138,31 @@ jobs:
         UPDATED_TASK_DEFINITION=$(aws ecs describe-task-definition \
           --task-definition ${{ secrets.ECS_TASK_NAME }} \
           --region ${{ secrets.AWS_REGION }} | jq \
-          '.taskDefinition.containerDefinitions[0].environment += [{"name": "REDIS_HOST", "value": "'$REDIS_HOST'"}]')
+          '.taskDefinition | del(.status, .revision, .taskDefinitionArn, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy) | 
+          .containerDefinitions[0].environment += [{"name": "REDIS_HOST", "value": "'$REDIS_HOST'"}]')
 
+        if [ -z "$UPDATED_TASK_DEFINITION" ]; then
+          echo "Error: Failed to update task definition JSON. Exiting."
+          exit 1
+        fi
+
+        echo "Registering Updated Task Definition..."
         REGISTERED_TASK=$(aws ecs register-task-definition \
           --region ${{ secrets.AWS_REGION }} \
           --cli-input-json "$UPDATED_TASK_DEFINITION")
 
         NEW_APP_TASK_ARN=$(echo $REGISTERED_TASK | jq -r '.taskDefinition.taskDefinitionArn')
 
+        if [ -z "$NEW_APP_TASK_ARN" ]; then
+          echo "Error: New Application Task ARN not found. Exiting."
+          exit 1
+        fi
+        echo "New Application Task ARN: $NEW_APP_TASK_ARN"
+
+        echo "Updating Application Service..."
         aws ecs update-service \
           --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
           --service-name ${{ secrets.ECS_SERVICE_NAME }} \
           --task-definition $NEW_APP_TASK_ARN \
           --force-new-deployment \
           --region ${{ secrets.AWS_REGION }}
-
-    - name: Remove Unhealthy Targets
-      run: |
-        echo "Removing Unhealthy Targets..."
-        UNHEALTHY_TARGETS=$(aws elbv2 describe-target-health \
-          --target-group-arn ${{ secrets.AWS_TARGET_GROUP_ARN }} \
-          --region ${{ secrets.AWS_REGION }} \
-          | jq -r '.TargetHealthDescriptions[] | select(.TargetHealth.State=="unhealthy") | .Target.Id')
-
-        for TARGET in $UNHEALTHY_TARGETS; do
-          echo "Deregistering unhealthy target: $TARGET"
-          aws elbv2 deregister-targets \
-            --target-group-arn ${{ secrets.AWS_TARGET_GROUP_ARN }} \
-            --targets Id=$TARGET \
-            --region ${{ secrets.AWS_REGION }}
-        done
-
-        echo "Unhealthy targets removed successfully."
