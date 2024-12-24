@@ -40,11 +40,13 @@ jobs:
       run: |
           echo "Deploying to ECS using Docker Compose..."
 
-          docker context create ecs my-ecs-context --profile default
+          curl -L https://raw.githubusercontent.com/docker/compose-cli/main/scripts/install/install_linux.sh | sh
+
+          docker context create ecs my-ecs-context
 
           docker context use my-ecs-context
 
           APP_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/hopelog-dev-backend
-          
+
           docker compose --file docker-compose.yml up
 
