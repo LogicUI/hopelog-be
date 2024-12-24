@@ -73,7 +73,6 @@ jobs:
           --family redis-task \
           --cpu "256" \
           --memory "512" \
-          --requires-compatibilities ["FARGATE"] \
           --container-definitions '[{
               "name": "redis",
               "image": "redis:latest",
