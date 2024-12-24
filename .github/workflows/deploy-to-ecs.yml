@@ -43,12 +43,15 @@ jobs:
 
     - name: Update ECS Task Definitions
       run: |
-        # Update Application Task Definition
         echo "Updating Application Task Definition..."
         NEW_TASK_DEFINITION=$(aws ecs describe-task-definition \
           --task-definition ${{ secrets.ECS_TASK_NAME }} \
           --region ${{ secrets.AWS_REGION }} | jq '.taskDefinition | 
-            del(.status, .revision, .taskDefinitionArn, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+            del(.status, .revision, .taskDefinitionArn, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy) |
+            .networkMode = "awsvpc" |
+            .requiresCompatibilities = ["FARGATE"] |
+            .cpu = "256" |
+            .memory = "512"')
 
         UPDATED_TASK_DEFINITION=$(echo $NEW_TASK_DEFINITION | jq \
           '.containerDefinitions[0].image = "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/hopelog-dev-backend:latest"')
@@ -69,11 +72,13 @@ jobs:
         echo "Creating Redis Task Definition..."
         REDIS_TASK_DEFINITION=$(aws ecs register-task-definition \
           --family redis-task \
+          --network-mode "awsvpc" \
+          --requires-compatibilities ["FARGATE"] \
+          --cpu "256" \
+          --memory "512" \
           --container-definitions '[{
               "name": "redis",
               "image": "redis:latest",
-              "memory": 512,
-              "cpu": 256,
               "essential": true,
               "portMappings": [{
                 "containerPort": 6379,
@@ -90,9 +95,9 @@ jobs:
         fi
         echo "Redis Task ARN: $REDIS_TASK_ARN"
 
-              echo "Updating Application Service..."
+        echo "Updating Application Service..."
         echo "App Task ARN: $APP_TASK_ARN"
-        
+
         aws ecs update-service \
           --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
           --service ${{ secrets.ECS_SERVICE_NAME }} \
@@ -108,7 +113,7 @@ jobs:
           --desired-count 1 \
           --launch-type FARGATE \
           --region ${{ secrets.AWS_REGION }}
-  
+          
 
     - name: Configure Environment Variables
       run: |
