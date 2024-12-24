@@ -12,8 +12,11 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException, Request, Header
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from supabase import create_client, AuthError, AuthApiError
+from supabase import AuthError, AuthApiError
 from dotenv import load_dotenv
+from supabase_init import supabase
+from routes.collective_prompt import router 
+
 
 logging.basicConfig(
     level=logging.INFO,  
@@ -24,6 +27,7 @@ logger = logging.getLogger("BasicLogger")
 
 load_dotenv()
 app = FastAPI()
+app.include_router(router, prefix="/api")
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,15 +43,6 @@ async def log_routes(request: Request, call_next):
     response = await call_next(request)
     return response
 
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_KEY")
-FRONTEND_URL = os.getenv("FRONTEND_URL")
-
-if not SUPABASE_URL or not SUPABASE_ANON_KEY:
-    raise ValueError("Supabase URL or Key is missing")
-
-supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 
 def generate_code_verifier():

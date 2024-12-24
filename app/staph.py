@@ -261,12 +261,6 @@ def schedule_daily_prompt():
         schedule.run_pending()
         time.sleep(1)
 
-# Main function
-if __name__ == "__main__":
-    create_daily_prompt_table()  # Code for Ensuring the database and tables are set up
-
-    # Scheduling the daily prompt generation
-    schedule_daily_prompt()
 
 # Create DailyPrompt table
 def create_daily_prompt_table():

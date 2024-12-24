@@ -7,3 +7,11 @@ python-jose
 fastapi[all]
 openai
 watchgod
+google-genai
+pytest  
+psycopg2-binary
+pymemcache
+redis 
+geocoder
+public-ip
+
