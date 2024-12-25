@@ -29,15 +29,9 @@ jobs:
       run: |
          wget https://github.com/aws/copilot-cli/releases/latest/download/copilot-linux && chmod +x copilot-linux && sudo mv copilot-linux /usr/local/bin/copilot && copilot --help
 
-    - name: Log in to Amazon ECR
-      id: ecr-login
-      uses: aws-actions/amazon-ecr-login@v2
-
     - name: Deploy using AWS Copilot
       run: |
           copilot app init hopelogdev --domain hopelog-dev.com || echo "Application already initialized."
           copilot svc init --name backend --svc-type "Backend Service" --dockerfile ./Dockerfile --port 5000 || echo "Service already initialized."
-          mkdir -p copilot/environments/development || echo "Environment directory already exists."
-          copilot env show -n development --manifest > copilot/environments/development/manifest.yml || echo "Environment manifest already exists."
           copilot env init --name development --default-config || echo "Environment already initialized."
           copilot env deploy -n development
