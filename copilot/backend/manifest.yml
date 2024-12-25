@@ -1,0 +1,33 @@
+name: backend
+type: Backend Service
+
+image:
+  build: ./Dockerfile
+  port: 5000
+
+http:
+  path: '/'              
+  targetContainer: backend
+
+  alias: hopelog-dev.com  
+  certificate: arn:aws:acm:us-east-1:471112658624:certificate/b9e80d6b-430c-4821-a267-a477c085382b
+  healthcheck:
+    path: '/health'       
+    success_codes: '200'   
+
+variables:
+  APP_ENV: "development"
+
+count:
+  range:
+    min: 1                 
+    max: 3                 
+  cpu: 70                 
+
+cpu: 512
+memory: 1024
+
+sidecars:
+  redis:
+    image: redis:latest
+    port: 6379
