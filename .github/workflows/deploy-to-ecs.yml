@@ -33,6 +33,6 @@ jobs:
       run: |
           copilot app init hopelogdev --domain hopelog-dev.com || echo "Application already initialized."
           copilot env ls
-          copilot env init --name development --profile default
+          copilot env init --name development 
           copilot env deploy --name development
           copilot svc deploy --name backend --env development
