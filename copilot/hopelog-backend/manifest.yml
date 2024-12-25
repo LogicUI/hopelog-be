@@ -5,6 +5,16 @@ image:
   build: ./Dockerfile
   port: 5000
 
+secrets:
+  SUPABASE_URL: supabase-dev:SUPABASE_URL
+  SUPABASE_KEY: supabase-dev:SUPABASE_KEY
+  FRONTEND_URL: supabase-dev:FRONTEND_URL
+  USER: supabase-dev:USER
+  PASSWORD: supabase-dev:PASSWORD
+  HOST: supabase-dev:HOST
+  PORT: supabase-dev:PORT
+  DBNAME: supabase-dev:DBNAME
+
 http:
   path: '/'              
   targetContainer: hopelog-backend
