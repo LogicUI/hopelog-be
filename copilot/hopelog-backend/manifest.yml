@@ -6,14 +6,22 @@ image:
   port: 5000
 
 secrets:
-  SUPABASE_URL: supabase-dev:SUPABASE_URL
-  SUPABASE_KEY: supabase-dev:SUPABASE_KEY
-  FRONTEND_URL: supabase-dev:FRONTEND_URL
-  USER: supabase-dev:USER
-  PASSWORD: supabase-dev:PASSWORD
-  HOST: supabase-dev:HOST
-  PORT: supabase-dev:PORT
-  DBNAME: supabase-dev:DBNAME
+  SUPABASE_URL:
+    secretsmanager: supabase-dev:SUPABASE_URL
+  SUPABASE_KEY: 
+    secretsmanager: supabase-dev:SUPABASE_KEY
+  FRONTEND_URL:
+    secretsmanager: supabase-dev:FRONTEND_URL
+  USER: 
+    secretsmanager: supabase-dev:USER
+  PASSWORD: 
+    secretsmanager: supabase-dev:PASSWORD
+  HOST:
+    secretsmanager: supabase-dev:HOST
+  PORT: 
+    secretsmanager: supabase-dev:PORT
+  DBNAME:
+    secretsmanager: supabase-dev:DBNAME
 
 http:
   path: '/'              
