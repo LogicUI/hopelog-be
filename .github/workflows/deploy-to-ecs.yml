@@ -32,7 +32,6 @@ jobs:
     - name: Deploy using AWS Copilot
       run: |
           copilot app init hopelogdev --domain hopelog-dev.com || echo "Application already initialized."
-          copilot env init --name development --app hopelogdev || echo "Environment already initialized."
           copilot env ls
           copilot env deploy --name development
           copilot svc deploy --name backend --env development
