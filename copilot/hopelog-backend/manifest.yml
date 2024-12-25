@@ -7,7 +7,7 @@ image:
 
 http:
   path: '/'              
-  targetContainer: backend
+  targetContainer: hopelog-backend
   alias: hopelog-dev.com  
   certificate: arn:aws:acm:us-east-1:471112658624:certificate/b9e80d6b-430c-4821-a267-a477c085382b
   healthcheck:
