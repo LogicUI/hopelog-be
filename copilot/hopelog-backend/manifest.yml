@@ -7,21 +7,21 @@ image:
 
 secrets:
   SUPABASE_URL:
-    secretsmanager: supabase-dev:SUPABASE_URL
+    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
   SUPABASE_KEY: 
-    secretsmanager: supabase-dev:SUPABASE_KEY
+    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
   FRONTEND_URL:
-    secretsmanager: supabase-dev:FRONTEND_URL
+    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
   USER: 
-    secretsmanager: supabase-dev:USER
+    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
   PASSWORD: 
-    secretsmanager: supabase-dev:PASSWORD
+    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
   HOST:
-    secretsmanager: supabase-dev:HOST
+    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
   PORT: 
-    secretsmanager: supabase-dev:PORT
+    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
   DBNAME:
-    secretsmanager: supabase-dev:DBNAME
+    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
 
 http:
   path: '/'              
