@@ -1,5 +1,0 @@
-name: development
-type: Environment
-observability:
-  container_insights: true
-  
