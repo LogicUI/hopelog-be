@@ -35,7 +35,9 @@ jobs:
 
     - name: Deploy using AWS Copilot
       run: |
-            copilot app init hopelogdev --domain hopelog-dev.com || echo "Application already initialized."
-            copilot svc init --name backend --svc-type "Backend Service" --dockerfile ./Dockerfile --port 5000 || echo "Service already initialized."
-            copilot env init --name development --profile default --default-config || echo "Environment already initialized."
-            copilot env deploy -n development
+          copilot app init hopelogdev --domain hopelog-dev.com || echo "Application already initialized."
+          copilot svc init --name backend --svc-type "Backend Service" --dockerfile ./Dockerfile --port 5000 || echo "Service already initialized."
+          mkdir -p copilot/environments/development || echo "Environment directory already exists."
+          copilot env show -n development --manifest > copilot/environments/development/manifest.yml || echo "Environment manifest already exists."
+          copilot env init --name development --profile default --default-config || echo "Environment already initialized."
+          copilot env deploy -n development
