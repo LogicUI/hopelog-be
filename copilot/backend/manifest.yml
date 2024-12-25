@@ -8,14 +8,12 @@ image:
 http:
   path: '/'              
   targetContainer: backend
-
   alias: hopelog-dev.com  
   certificate: arn:aws:acm:us-east-1:471112658624:certificate/b9e80d6b-430c-4821-a267-a477c085382b
   healthcheck:
     path: '/health'       
     success_codes: '200'   
 
-            
 cpu: 512
 memory: 1024
 

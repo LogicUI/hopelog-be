@@ -35,4 +35,4 @@ jobs:
           copilot app show
           copilot env init --name development --default-config  
           copilot env deploy --name development --force
-          copilot svc deploy --name backend --env development --force
+          copilot svc deploy --name backend --env development 
