@@ -1,5 +1,5 @@
-name: backend
-type: Backend Service
+name: 'hopelog-backend'
+type: 'Load Balanced Web Service'
 
 image:
   build: ./Dockerfile
@@ -16,6 +16,14 @@ http:
 
 cpu: 512
 memory: 1024
+count:
+  range: 1-3
+  cooldown:
+    in: 60s
+    out: 30s
+  cpu_percentage: 70
+  requests: 30
+  response_time: 2s
 
 sidecars:
   redis:
