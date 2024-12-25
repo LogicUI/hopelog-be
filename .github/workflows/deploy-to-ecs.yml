@@ -31,6 +31,7 @@ jobs:
 
     - name: Deploy using AWS Copilot
       run: |
+          copilot app delete hopelogdev || echo "Application does not exist."
           copilot app init hopelogdev --domain hopelog-dev.com || echo "Application already initialized."
           copilot app show
           copilot env delete --name development || echo "Environment does not exist."
