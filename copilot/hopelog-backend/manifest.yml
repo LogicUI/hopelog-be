@@ -6,23 +6,15 @@ image:
   port: 5000
 
 secrets:
-  SUPABASE_URL:
-    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
-  SUPABASE_KEY: 
-    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
-  FRONTEND_URL:
-    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
-  USER: 
-    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
-  PASSWORD: 
-    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
-  HOST:
-    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
-  PORT: 
-    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
-  DBNAME:
-    secretsmanager: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev-8CbfqK
-
+  SUPABASE_URL: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
+  SUPABASE_KEY: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
+  FRONTEND_URL: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
+  USER: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
+  PASSWORD: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
+  HOST: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
+  PORT: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
+  DBNAME: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
+  
 http:
   path: '/'              
   targetContainer: hopelog-backend
