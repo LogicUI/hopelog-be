@@ -35,4 +35,4 @@ jobs:
           copilot app show
           copilot env init --name development --default-config  
           copilot env deploy --name development --force
-          copilot svc init --name hopelog-backend --svc-type "Load Balanced Web Service" --dockerfile ./Dockerfile --port 5000
+  
