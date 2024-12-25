@@ -25,8 +25,11 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-    - name: Setup AWS Copilot
-      uses: softprops/setup-aws-copilot@v1
+    - name: Install AWS Copilot
+      run: |
+          curl -Lo copilot https://github.com/aws/copilot-cli/releases/download/v1.34.0/copilot-linux-v1.34.0
+          chmod +x copilot
+          sudo mv copilot /usr/local/bin/
 
     - name: Log in to Amazon ECR
       id: ecr-login
