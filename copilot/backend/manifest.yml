@@ -15,14 +15,6 @@ http:
     path: '/health'       
     success_codes: '200'   
 
-variables:
-  APP_ENV: "development"
-
-count:
-  range: 1-3
-  cpu_percentage: 70
-  requests: 10
-  response_time: 2s
             
 cpu: 512
 memory: 1024
