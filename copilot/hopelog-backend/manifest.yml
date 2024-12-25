@@ -6,14 +6,7 @@ image:
   port: 5000
 
 secrets:
-  SUPABASE_URL: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
-  SUPABASE_KEY: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
-  FRONTEND_URL: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
-  USER: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
-  PASSWORD: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
-  HOST: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
-  PORT: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
-  DBNAME: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
+  SECRETS_MANAGER: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
   
 http:
   path: '/'              

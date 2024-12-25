@@ -5,7 +5,6 @@ import logging
 import secrets
 import hashlib
 import base64
-
 from models.user import User
 from models.signIn import SignIn
 from typing import Optional
@@ -16,7 +15,7 @@ from supabase import AuthError, AuthApiError
 from dotenv import load_dotenv
 from supabase_init import supabase
 from routes.collective_prompt import router 
-
+from secrets_manager import set_env_vars_from_json_str
 
 logging.basicConfig(
     level=logging.INFO,  
@@ -28,6 +27,11 @@ logger = logging.getLogger("BasicLogger")
 load_dotenv()
 app = FastAPI()
 app.include_router(router, prefix="/api")
+
+secrets_manager = os.getenv("SECRETS_MANAGER")
+
+if(secrets_manager != None):
+   set_env_vars_from_json_str(secrets_manager)
 
 app.add_middleware(
     CORSMiddleware,
