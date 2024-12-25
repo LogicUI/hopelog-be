@@ -33,5 +33,4 @@ jobs:
       run: |
           copilot app init hopelogdev --domain hopelog-dev.com || echo "Application already initialized."
           copilot svc init --name backend --svc-type "Backend Service" --dockerfile ./Dockerfile --port 5000 || echo "Service already initialized."
-          copilot env init --name development --default-config || echo "Environment already initialized."
-          copilot env deploy -n development
+          copilot svc deploy --name backend --env development
