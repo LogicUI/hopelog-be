@@ -3,8 +3,14 @@ from dotenv import load_dotenv
 import os
 import logging
 
+
 # Load environment variables
 load_dotenv()
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+)
 
 # Environment variables
 user = os.getenv('USER')
@@ -12,6 +18,13 @@ password = os.getenv('PASSWORD')
 host = os.getenv('HOST')
 port = os.getenv('PORT')
 dbname = os.getenv('DBNAME')
+
+
+logging.info("user: %s", user)
+logging.info("password %s", password)
+logging.info("host %s", host)
+logging.info("port %s", port)
+logging.info("dbname %s", dbname)
 
 # Logging setup
 logging.basicConfig(
