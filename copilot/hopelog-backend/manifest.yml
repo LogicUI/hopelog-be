@@ -6,12 +6,12 @@ image:
   port: 5000
 
 secrets:
-  SUPABASE_URL: /copilot/hopelogdev/development/SUPABASE_URL,
-  SUPABASE_KEY: /copilot/hopelogdev/development/SUPABASE_KEY,
-  USER: /copilot/applications/hopelogdev/USER,
-  PASSWORD: /copilot/applications/hopelogdev/PASSWORD,
-  HOST: /copilot/applications/hopelogdev/HOST,
-  PORT: /copilot/applications/hopelogdev/PORT,
+  SUPABASE_URL: /copilot/hopelogdev/development/SUPABASE_URL
+  SUPABASE_KEY: /copilot/hopelogdev/development/SUPABASE_KEY
+  USER: /copilot/applications/hopelogdev/USER
+  PASSWORD: /copilot/applications/hopelogdev/PASSWORD
+  HOST: /copilot/applications/hopelogdev/HOST
+  PORT: /copilot/applications/hopelogdev/PORT
   DBNAME: /copilot/applications/hopelogdev/DBNAME
 http:
   path: '/'              
