@@ -9,13 +9,13 @@ logging.basicConfig(
 def set_env_vars_from_json_str(json_str):
     try:
         secrets_dict = json.loads(json_str)
-        
+        logging.info("Secrets loaded from JSON string")
     except json.JSONDecodeError:
         return
 
     for key, value in secrets_dict.items():
         logging.info("Setting environment variable: %s", key)
         logging.info("Value: %s", value)
-        os.environ[key] = str(value)
+        os.environ[key] = value
 
 
