@@ -30,6 +30,7 @@ app.include_router(router, prefix="/api")
 
 secrets_manager = os.getenv("SECRETS_MANAGER")
 
+logging.info("getting secrets manager value")
 print(secrets_manager)
 logging.info("Secrets manager: %s", str(secrets_manager))
 if(secrets_manager != None):
