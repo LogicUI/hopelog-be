@@ -7,7 +7,6 @@ image:
 
 secrets:
   SECRETS_MANAGER: arn:aws:secretsmanager:us-east-1:471112658624:secret:supabase-dev
-  
 http:
   path: '/'              
   targetContainer: hopelog-backend
