@@ -14,4 +14,4 @@ pymemcache
 redis 
 geocoder
 public-ip
-
+pyjwt
