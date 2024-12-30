@@ -15,7 +15,7 @@ from supabase import AuthError, AuthApiError
 from dotenv import load_dotenv
 from supabase_init import supabase
 from routes.collective_prompt import router 
-from secrets_manager import set_env_vars_from_json_str
+from routes.user_ai.user_ai import router as router_ai
 
 logging.basicConfig(
     level=logging.INFO,  
@@ -27,7 +27,7 @@ logger = logging.getLogger("BasicLogger")
 load_dotenv()
 app = FastAPI()
 app.include_router(router, prefix="/api")
-
+app.include_router(router_ai, prefix="/api")
 
 app.add_middleware(
     CORSMiddleware,
@@ -99,6 +99,7 @@ def sign_in(user: SignIn):
             "email": user.email,
             "password": user.password
         })
+        logger.info("Response %s", str(response))
         return {"message": "User signed in successfully", "data": response}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
