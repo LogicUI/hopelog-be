@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 from supabase_init import supabase
 from routes.collective_prompt import router 
 from routes.user_ai.user_ai import router as router_ai
+from psycopg2.errors import UniqueViolation 
 
 logging.basicConfig(
     level=logging.INFO,  
@@ -139,6 +140,14 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    error_message = str(exc)
+    if "duplicate key" in error_message and "journal" in error_message:
+        logger.error("Duplicate title error detected: %s", error_message)
+        return JSONResponse(
+            status_code=400,
+            content={"detail": "A journal entry with the same title already exists."}
+        )
+
     logger.error("Unhandled exception: %s at %s", exc, request.url)
     return JSONResponse(
         status_code=500,
