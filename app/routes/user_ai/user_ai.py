@@ -19,13 +19,6 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-@router.get("/ai-prompt")
-def get_user(token: str = Depends(get_current_user)):
-    user_id = token["sub"]    
-    
-    return {"user_id": user_id}
-
-
 @router.post("/stream-ai-prompt")
 async def stream_ai_prompt(request: dict, token: str = Depends(get_current_user)):
     """
