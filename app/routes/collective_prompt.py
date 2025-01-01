@@ -54,7 +54,7 @@ async def get_daily_prompt(db_connection=Depends(get_db_connection)):
 async def create_collective_prompt(collective_prompt: collective_prompt, request:Request, db_connection=Depends(get_db_connection)): 
   forwarded_for = request.headers.get('X-Forwarded-For')
   if forwarded_for:
-        client_ip = forwarded_for.split(',')[0]  # First IP in the list
+        client_ip = forwarded_for.split(',')[0] 
   else:
         client_ip = request.client.host
 
@@ -107,8 +107,10 @@ async def get_user_prompts(db_connection=Depends(get_db_connection)):
     try:
         cursor = db_connection.cursor()
         cursor.execute("SELECT user_text, emotion, latitude, longitude, prompt FROM collective_prompt")
-        result = cursor.fetchall()
-        return result
+        rows = cursor.fetchall()
+        columns = [desc[0] for desc in cursor.description]
+        results = [dict(zip(columns, row)) for row in rows]
+        return {"prompts": results}
     except Exception as e:
         logging.error("Failed to fetch user prompts: %s", e)
         return {"error": "Failed to fetch user prompts"}
