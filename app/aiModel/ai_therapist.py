@@ -131,9 +131,7 @@ async def analyze_agent(conversation_history):
         print(f"Error occurred: {e}")
         return None
 
-
-
-async def stream_emotion_analysis_response(user_message, conversation_history=[], user_name=""):
+def emotional_therapist_agent(user_message, conversation_history=[], user_name=""):
     """
     Construct the prompt and stream the response from the AI model.
     """
@@ -142,7 +140,8 @@ async def stream_emotion_analysis_response(user_message, conversation_history=[]
         f"User: {entry['user']}" if "user" in entry else f"AI: {entry['therapist']}"
         for entry in conversation_history
     )
-    
+    logging.info('user name %s' , user_name)
+    logging.info('history %s' , formatted_history)
     # Construct the system prompt
     system_prompt = f"""
     You are a conversational therapist. 
@@ -161,35 +160,35 @@ async def stream_emotion_analysis_response(user_message, conversation_history=[]
     2. It should return back a text in a chat format as if i'm talking to a real person
     3. Keep the response empathetic and supportive.
     4. The response should not be robotic, it should be more human like with emotions expressed and being a good listener while implying and prompt the user to talk more
-    5. It should be more expressive and engaging like "hey john!, im so sorry about what you feel !, you are not alone in this and im here to listen to you"
-    6. Should address by name and should be more personal
+    5. It should refer to the person by {user_name}
+    6. Should address user by name and should be more personal after initial Hey it should not be addressing Hey again
     7. Do not provide any medical advice or diagnosis.
     8. Do not repeat saying that you will be listening without judgement. 
     """
+    try:
+        completion = syncClient.chat.completions.create(
+            model="gemini-2.0-flash-exp",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
+            ],
+            temperature=0.3,
+            max_tokens=2000,
+            stream=True  
+        )
+        return completion
+    except Exception as e:
+        logging.error("Error in streaming response: %s", str(e))
+        raise e
+    
+def stream_emotional_therapist_agent(completion):
+    try:
+        for chunk in completion:
+            for choice in chunk.choices:
+                if choice.delta.content:
+                    logging.info("Response: %s", choice.delta.content)
+                    yield choice.delta.content
 
-    # Generator to stream response
-    async def response_generator():
-        logging.info("Streaming AI response...")
-        logging.info("Prompt: %s", system_prompt)
-        
-        try:
-            completion = syncClient.chat.completions.create(
-                model="gemini-2.0-flash-exp",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message}
-                ],
-                temperature=0.3,
-                max_tokens=2000,
-                stream=True  # Enable streaming
-            )
-            for chunk in completion:
-                for choice in chunk.choices:
-                    if choice.delta.content:  
-                         yield choice.delta.content
-                    
-        except Exception as e:
-            logging.error("Error in streaming response: %s", str(e))
-            raise e
-
-    return response_generator()
+    except Exception as e: 
+        logging.error("Error in streaming response: %s", str(e))
+        raise e
