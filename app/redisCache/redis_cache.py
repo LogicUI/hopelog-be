@@ -1,14 +1,29 @@
 import redis 
 import logging
+import os
 from datetime import datetime, timedelta
 
 
-REDIS_HOST='redis'
-REDIS_PORT=6379
+REDIS_HOST = os.environ.get('REDIS_HOST', 'redis') 
+REDIS_PORT = int(os.environ.get('REDIS_PORT', 6379))
+
 
 # Initialize Redis client
 redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 
+def set_cache(key: str, value: str, ttl: int = None):
+    """
+    Stores a key in Redis with an optional expiration time.
+    """
+    try:
+        if ttl:
+            redis_client.set(key, value, ex=ttl)  
+            logging.info("Key '%s' set with value '%s' and will expire in %d seconds.", key, value, ttl)
+        else:
+            redis_client.set(key, value)
+            logging.info("Key '%s' set with value '%s' with no expiration.", key, value)
+    except Exception as e:
+        logging.error("Failed to set key '%s': %s", key, e)
 
 def calculate_ttl_to_midnight() -> int:
     """
