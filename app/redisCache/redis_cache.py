@@ -2,14 +2,33 @@ import redis
 import logging
 import os
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+import logging
+import threading
 
 
-REDIS_HOST = os.environ.get('REDIS_HOST', 'redis') 
-REDIS_PORT = int(os.environ.get('REDIS_PORT', 6379))
+load_dotenv()
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+)
+
+REDIS_HOST = os.getenv('REDIS_HEROKU_HOST', 'redis') 
+REDIS_PORT = os.getenv('REDIS_HEROKU_PORT', 6379)
+REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
+REDIS_URL = os.getenv('REDIS_URL', 'redis:6379')
 
 
 # Initialize Redis client
-redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+redis_client = redis.from_url(
+        REDIS_URL,
+        health_check_interval=10,
+        socket_connect_timeout=5,
+        retry_on_timeout=True,
+        socket_keepalive=True,
+        ssl_cert_reqs='none'             
+    )
 
 def set_cache(key: str, value: str, ttl: int = None):
     """
@@ -84,18 +103,32 @@ def get_cache(key: str) -> str:
         return None
 
 try:
-    # Connect to Redis
-    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
-
+    # Connection to Redis
+    r = redis.from_url(
+        REDIS_URL,
+        health_check_interval=10,
+        socket_connect_timeout=5,
+        retry_on_timeout=True,
+        socket_keepalive=True,
+        ssl_cert_reqs='none'             
+    )
+    
     # Test the connection
-    pong = redis_client.ping()
+    pong = r.ping()
     if pong:
         logging.info("Connected to Redis server!")
 
-    # Example: Set and get a value
-    redis_client.set("key", "value")
-    value = redis_client.get("key")
-    logging.info(f"Stored value for 'key': {value}")
+    # Create a PubSub instance
+    p = r.pubsub()
+
+    p.subscribe('test')
+
+    def redis_auto_check(p):
+        t = threading.Timer(5, redis_auto_check, [p])
+        t.start()
+        p.check_health()
+
+    redis_auto_check(p)
 
 except redis.ConnectionError as e:
-    logging.info(f"Could not connect to Redis: {e}")
+    logging.error(f"Could not connect to Redis: {e}")

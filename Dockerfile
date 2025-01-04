@@ -10,8 +10,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY /app . 
 
-# Expose the port for FastAPI
-EXPOSE 5000
+RUN chmod +x start.sh
 
-# Command to run the FastAPI app with Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000", "--reload"]
+CMD ["sh", "./start.sh"]
