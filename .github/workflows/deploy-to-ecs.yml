@@ -1,11 +1,6 @@
 name: Deploy to ECS
 
 on:
-  push:
-    paths-ignore:
-      - "agents/**"
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
