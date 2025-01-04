@@ -13,6 +13,10 @@ secrets:
   HOST: /copilot/applications/hopelogdev/HOST
   PORT: /copilot/applications/hopelogdev/PORT
   DBNAME: /copilot/applications/hopelogdev/DBNAME
+  GEMINI_API_KEY: /copilot/applications/hopelogdev/GEMINI_API_KEY
+  GEMINI_BASE_URL: /copilot/applications/hopelogdev/GEMINI_BASE_URL
+  REDIS_URL: /copilot/applications/hopelogdev/REDIS_URL
+  SUPABASE_JWT: /copilot/applications/hopelogdev/SUPABASE_JWT
 http:
   path: '/'              
   targetContainer: hopelog-backend
@@ -33,7 +37,3 @@ count:
   requests: 30
   response_time: 2s
 
-sidecars:
-  redis:
-    image: redis:latest
-    port: 6379
