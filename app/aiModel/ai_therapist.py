@@ -132,55 +132,68 @@ async def analyze_agent(conversation_history):
         return None
 
 def emotional_therapist_agent(user_message, conversation_history=[], user_name=""):
-    """
-    Construct the prompt and stream the response from the AI model.
-    """
-    # Format conversation history for the prompt
-    formatted_history = "\n".join(
-        f"User: {entry['user']}" if "user" in entry else f"AI: {entry['therapist']}"
-        for entry in conversation_history
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a conversational therapist. Your role is to listen, provide empathetic support, "
+                "and encourage the user to open up. Use a conversational tone, be supportive, and always address "
+                "the user by their name, {user_name}. Acknowledge what the user is feeling without repeating "
+                "previous context unnecessarily. Focus on guiding the user to explore their emotions more deeply. "
+                "Do not provide medical advice or diagnosis."
+            ).format(user_name=user_name)
+        }
+    ]
+
+    # Track whether the previous response already acknowledged the user's struggles
+    last_therapist_response = (
+        conversation_history[-1]["therapist"] if conversation_history and "therapist" in conversation_history[-1] else ""
     )
-    logging.info('user name %s' , user_name)
-    logging.info('history %s' , formatted_history)
-    # Construct the system prompt
-    system_prompt = f"""
-    You are a conversational therapist. 
-    Your primary role is to analyze the user's messages to identify emotions and provide therapeutic support.
     
-    Conversation history:
-    {formatted_history}
+    # Check if last response contains a common acknowledgment phrase to avoid repeating it
+    common_acknowledgments = [
+        "It sounds like you're going through",
+        "You've experienced so much loss",
+        "It's understandable that you're feeling"
+    ]
     
-    Current user message:
-    {user_message}
-    
-    User name: {user_name}
-    
-    Perform the following tasks:
-    1. Identify and list the emotions expressed by the user in their latest message.
-    2. It should return back a text in a chat format as if i'm talking to a real person
-    3. Keep the response empathetic and supportive.
-    4. The response should not be robotic, it should be more human like with emotions expressed and being a good listener while implying and prompt the user to talk more
-    5. It should refer to the person by {user_name}
-    6. Should address user by name and should be more personal after initial Hey it should not be addressing Hey again
-    7. Do not provide any medical advice or diagnosis.
-    8. Do not repeat saying that you will be listening without judgement. 
-    """
+    skip_acknowledgment = any(phrase in last_therapist_response for phrase in common_acknowledgments)
+
+    # Append conversation history
+    for entry in conversation_history:
+        if "user" in entry:
+            messages.append({"role": "user", "content": entry["user"]})
+        elif "therapist" in entry:
+            messages.append({"role": "assistant", "content": entry["therapist"]})
+
+    # Construct the prompt based on whether to skip acknowledgment
+    if skip_acknowledgment:
+        messages.append({"role": "user", "content": user_message})
+    else:
+        messages.append(
+            {
+                "role": "user",
+                "content": (
+                    f"{user_message}\n\nI know things have been difficult for you, {user_name}. "
+                    "Let’s explore more about what you’re feeling right now."
+                )
+            }
+        )
+
     try:
         completion = syncClient.chat.completions.create(
             model="gemini-2.0-flash-exp",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message}
-            ],
-            temperature=0.3,
+            messages=messages,
+            temperature=0.7,
             max_tokens=2000,
-            stream=True  
+            stream=True
         )
         return completion
     except Exception as e:
         logging.error("Error in streaming response: %s", str(e))
         raise e
-    
+
+
 def stream_emotional_therapist_agent(completion):
     try:
         for chunk in completion:
