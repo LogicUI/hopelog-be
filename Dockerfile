@@ -1,15 +1,17 @@
-FROM python:3.11.11-alpine3.19
+FROM python:3.11.11-slim
 
-# Set the working directory
+# Set working directory
 WORKDIR /app
 
-# Copy requirements and install dependencies
+# Install dependencies directly
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application files
-COPY /app . 
+# Copy the application code
+COPY . .
 
-RUN chmod +x start.sh
+# Expose the application port
+EXPOSE 5000
 
-CMD ["sh", "./start.sh"]
+# Run the application with hot reload
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000", "--reload", "--reload-dir", "/app"]
