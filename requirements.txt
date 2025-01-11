@@ -13,6 +13,7 @@ psycopg2-binary
 pymemcache
 redis 
 geocoder
+guardrails-ai
 public-ip
 pyjwt
 gunicorn
