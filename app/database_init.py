@@ -9,27 +9,27 @@ load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
 # Environment variables
-user = os.getenv('USER')
-password = os.getenv('PASSWORD')
-host = os.getenv('HOST')
-port = os.getenv('PORT')
-dbname = os.getenv('DBNAME')
+user = os.getenv("USER")
+password = os.getenv("PASSWORD")
+host = os.getenv("HOST")
+port = os.getenv("PORT")
+dbname = os.getenv("DBNAME")
 
 
 logging.info("user: %s", user)
 logging.info("password %s", password)
 logging.info("host %s", host)
 logging.info("port %s", port)
-logging.info("dbname %s", dbname)
+logging
 
 # Logging setup
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
 # Create connection pool
@@ -41,13 +41,14 @@ try:
         password=password,
         host=host,
         port=port,
-        database=dbname
+        database=dbname,
     )
     if db_pool:
         logging.info("Connection pool created successfully.")
 except Exception as e:
     logging.error(f"Error creating connection pool: {e}")
     raise e
+
 
 # Dependency to provide a connection
 def get_db_connection():
@@ -56,4 +57,3 @@ def get_db_connection():
         yield connection
     finally:
         db_pool.putconn(connection)
-

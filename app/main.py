@@ -1,5 +1,6 @@
 """This file contains the FastAPI code for the authentication API. 
 It contains the following endpoints:"""
+
 import os
 import logging
 import secrets
@@ -14,13 +15,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from supabase import AuthError, AuthApiError
 from dotenv import load_dotenv
 from supabase_init import supabase
-from routes.collective_prompt import router 
+from routes.collective_prompt import router
 from routes.user_ai.user_ai import router as router_ai
-from psycopg2.errors import UniqueViolation 
+from psycopg2.errors import UniqueViolation
 
 logging.basicConfig(
-    level=logging.INFO,  
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
 logger = logging.getLogger("BasicLogger")
@@ -32,11 +33,16 @@ app.include_router(router_ai, prefix="/api")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000","https://build-with-ai-hackaton-fe.vercel.app/", "https://build-with-ai-hackaton-fe.vercel.app"],  
+    allow_origins=[
+        "http://localhost:3000",
+        "https://build-with-ai-hackaton-fe.vercel.app/",
+        "https://build-with-ai-hackaton-fe.vercel.app",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],  
-    allow_headers=["*"],  
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
 
 @app.middleware("http")
 async def log_routes(request: Request, call_next):
@@ -45,20 +51,22 @@ async def log_routes(request: Request, call_next):
     return response
 
 
-
 def generate_code_verifier():
-    return secrets.token_urlsafe(64)  
+    return secrets.token_urlsafe(64)
+
 
 def generate_code_challenge(code_verifier):
     sha256_hash = hashlib.sha256(code_verifier.encode()).digest()
-    return base64.urlsafe_b64encode(sha256_hash).decode('utf-8').rstrip("=")
-    
+    return base64.urlsafe_b64encode(sha256_hash).decode("utf-8").rstrip("=")
+
+
 @app.get("/")
 def health():
     """Check the health status of the API"""
     logger.info("Health check")
     return {"status": "ok"}
-    
+
+
 @app.get("/health")
 def health_check():
     """Check the health status of the API"""
@@ -70,54 +78,59 @@ def health_check():
 def sign_up(user: User):
     """used to sign up a user"""
     try:
-        response = supabase.auth.sign_up({
-            "email": user.email,
-            "password": user.password,
-            "options": {
-                "data": {
-                    "name": user.name,
-                    "age": user.age
-                }
+        response = supabase.auth.sign_up(
+            {
+                "email": user.email,
+                "password": user.password,
+                "options": {"data": {"name": user.name, "age": user.age}},
             }
-        })
+        )
         logger.info("Response %s", str(response))
         return {
             "message": "User signed up successfully. Please check your email for verification",
-            "data": response
+            "data": response,
         }
     except AuthApiError as e:
-        raise HTTPException(status_code=400, detail="Supabase API error: " + str(e)) from e
+        raise HTTPException(
+            status_code=400, detail="Supabase API error: " + str(e)
+        ) from e
     except AuthError as e:
-        raise HTTPException(status_code=400, detail="Supabase Auth error: " + str(e)) from e
+        raise HTTPException(
+            status_code=400, detail="Supabase Auth error: " + str(e)
+        ) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error: " + str(e)) from e
+        raise HTTPException(
+            status_code=500, detail="Internal server error: " + str(e)
+        ) from e
+
 
 @app.post("/auth/signin")
 def sign_in(user: SignIn):
     """used to sign in a user"""
     try:
-        response = supabase.auth.sign_in_with_password({
-            "email": user.email,
-            "password": user.password
-        })
+        response = supabase.auth.sign_in_with_password(
+            {"email": user.email, "password": user.password}
+        )
         logger.info("Response %s", str(response))
         return {"message": "User signed in successfully", "data": response}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    
+
+
 @app.get("/auth/verify")
 def verify_session(authorization: Optional[str] = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
-        return {"is_logged_in": False, "message": "Authorization header missing or invalid"}
+        return {
+            "is_logged_in": False,
+            "message": "Authorization header missing or invalid",
+        }
     token = authorization.split(" ")[1]
     try:
         user_response = supabase.auth.get_user(token)
-        return {
-            "is_logged_in": True,
-            "user": user_response 
-        }
+        return {"is_logged_in": True, "user": user_response}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
 
 @app.post("/auth/logout")
 def log_out():
@@ -145,7 +158,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         logger.error("Duplicate title error detected: %s", error_message)
         return JSONResponse(
             status_code=400,
-            content={"detail": "A journal entry with the same title already exists."}
+            content={"detail": "A journal entry with the same title already exists."},
         )
 
     logger.error("Unhandled exception: %s at %s", exc, request.url)

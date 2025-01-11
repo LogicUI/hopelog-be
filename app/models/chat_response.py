@@ -3,5 +3,5 @@ from typing import List, Dict
 
 
 class ChatResponse(BaseModel):
-    user_message:str
+    user_message: str
     conversation_history: List[Dict[str, str]]
