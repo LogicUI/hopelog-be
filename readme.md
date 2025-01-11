@@ -1,73 +1,54 @@
+Feelings AI Bot
+# Feelings AI Bot
 
-## How to Run
+The Feelings AI Bot is a supportive tool designed to help users reflect on their emotions by facilitating conversations with an AI-driven bot. It allows users to engage in thoughtful conversations, save and view their entries, and receive collective prompts for deeper introspection.
 
-1. Clone the Repository
+## Development Link
+[Feelings AI Bot (Dev Link)](#https://build-with-ai-hackaton-fe.vercel.app/)
 
-```bash
- git clone https://github.com/LogicUI/build-with-ai-be.git
- cd https://github.com/LogicUI/build-with-ai-be.git
-```
+## Version History
 
-2. Build the Docker Image
+### Patch Version 1.1 – Launched on 11 Jan 2025
+**Improved Bot Responses:**
+- Enhanced handling of greetings, short responses, and gibberish text inputs such as "hello", "bye", and "rwarw".
 
-```bash
-docker build -t build-with-ai-hackaton-be .
+**New Feature:**
+- Added a disclaimer for bot users to clarify the tool’s purpose, privacy policy, and limitations.
 
-```
-- The -t build-with-ai-hackaton-be assigns a tag (build-with-ai-hackaton-be) to the image.
+### MVP Version 1.0 – Launched on 5 Jan 2025
+**Core Features:**
+- Enabled AI-driven conversations with a virtual therapist.
+- Introduced functionality to save and view past entries, allowing users to track their emotional journey.
+- Added a collective prompt feature to guide users in self-reflection.
 
-- The . specifies the context (current directory) where the Dockerfile is located.
+## Privacy Policy
+Since the bot may involve sharing personal information, feelings, or emotions that could be linked to mental health or medical conditions, we prioritize transparency and user privacy:
 
-3. Run the Docker Container
+- Data is tied to user accounts and securely stored.
+- The collected data is only used to enhance the bot’s responses and improve user experience.
+- We do not share data with external parties, and only authorized personnel have access to it.
 
-```bash 
-docker run -p 5000:5000 build-with-ai-hackaton-be
-``` 
-- The -p 5000:5000 maps port 5000 on your local machine to port 5000 in the container.
-- The app will be accessible at http://localhost:5000.
+For more details, please refer to our full Privacy Policy.
 
-4. Verify the Application
-You can test the endpoints in your browser or using a tool like curl:
+## Usage Instructions
 
-```bash 
-curl http://localhost:5000/
-```
+### Start a Conversation:
+Open the Feelings AI Bot and begin a conversation with the virtual therapist.
 
-```json 
-{"message": "Welcome to the ECS Flask App!"}
-```
+### Save Your Entries:
+After each session, you can save your entries for future reference.
 
-```bash 
-curl http://localhost:5000/health
-``` 
+### View Past Entries:
+Access and review your saved entries through the provided interface.
 
-```json 
-{"status": "healthy"}
-```
+### Use Collective Prompts:
+Utilize collective prompts to explore different aspects of your thoughts and emotions.
 
-Additional Notes
-Stopping the Container
-To stop the running container, press CTRL+C in the terminal where it is running.
+## Future Enhancements
 
-Alternatively, list all running containers and stop the specific one:
+- **Mood Tracking:** We plan to introduce a feature where users can log their mood over time.
+- **Sentiment Analysis:** Adding sentiment analysis to further refine the bot’s responses based on the user's emotional tone.
+- **Conversation Summarization:** Summarizing key points after each session to help users reflect more effectively.
 
-```bash 
-docker ps
-docker stop <container-id>
-```
-
-Removing the Image
-If you want to delete the Docker image, run:
-
-```bash 
-docker rmi build-with-ai-hackaton-be
-```
-
-## Troubleshooting
-Port Already in Use
-If port 5000 is already being used, modify the run command to use a different host port:
-
-```bash 
-docker run -p 8080:5000 build-with-ai-hackaton-be
-```
-
+## Contributing
+We welcome contributions! Please feel free to submit a pull request or open an issue for any suggestions or bug reports.
