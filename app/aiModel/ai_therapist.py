@@ -326,7 +326,7 @@ def emotional_therapist_agent(user_message, conversation_history=[], user_name="
 
         try:
             completion = syncClient.chat.completions.create(
-                model=MODEL_NAME,
+                model="gemini-2.0-flash-exp",
                 messages=messages,
                 temperature=0.7,
                 max_tokens=2000,
