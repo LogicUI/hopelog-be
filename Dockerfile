@@ -1,17 +1,17 @@
-FROM python:3.11.11-slim
+FROM python:3.11.11-alpine3.19
 
-# Set working directory
+# Set the working directory
 WORKDIR /app
 
-# Install dependencies directly
+# Copy requirements and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the application code
-COPY . .
+# Copy application files
+COPY /app . 
 
-# Expose the application port
+# Expose the port for FastAPI
 EXPOSE 5000
 
-# Run the application with hot reload
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000", "--reload", "--reload-dir", "/app"]
+# Command to run the FastAPI app with Uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000", "--reload"]
