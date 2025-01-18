@@ -3,3 +3,4 @@ task-definition.json
 .DS_Store
 __pycache__
 heroku-run.sh
+settings.json
