@@ -1,6 +1,5 @@
 import re
 import random
-import logging
 
 
 def is_greeting(user_message):
@@ -17,8 +16,30 @@ def is_greeting(user_message):
         "greetings",
     ]
 
+    # List of emotional content indicators
+    emotional_indicators = [
+        "sad",
+        "happy",
+        "angry",
+        "anxious",
+        "depressed",
+        "feeling",
+        "feel",
+        "felt",
+        "worried",
+        "stressed",
+        "tired",
+        "exhausted",
+        "overwhelmed",
+    ]
+
     normalized_message = user_message.strip().lower()
 
+    # If the message contains emotional content, don't treat it as just a greeting
+    if any(indicator in normalized_message for indicator in emotional_indicators):
+        return False
+
+    # Check if it's a simple greeting
     return any(
         re.search(rf"\b{phrase}\b", normalized_message) for phrase in greeting_phrases
     )
@@ -512,16 +533,7 @@ def is_affirmation(user_message):
 
 
 def is_short_message(user_message):
-    """
-    Detects if the user message is a short response based on predefined criteria,
-    while excluding complaints, negations, and affirmations.
 
-    Args:
-        user_message (str): The input message from the user.
-
-    Returns:
-        bool: True if the message is considered short, False otherwise.
-    """
     short_phrases = {
         "ok",
         "yeah",
