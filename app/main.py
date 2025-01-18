@@ -1,7 +1,6 @@
 """This file contains the FastAPI code for the authentication API. 
 It contains the following endpoints:"""
 
-import os
 import logging
 import secrets
 import hashlib
@@ -17,7 +16,6 @@ from dotenv import load_dotenv
 from supabase_init import supabase
 from routes.collective_prompt import router
 from routes.user_ai.user_ai import router as router_ai
-from psycopg2.errors import UniqueViolation
 
 logging.basicConfig(
     level=logging.INFO,
