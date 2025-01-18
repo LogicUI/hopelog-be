@@ -17,3 +17,5 @@ guardrails-ai
 public-ip
 pyjwt
 gunicorn
+deepeval
+pytest-asyncio
