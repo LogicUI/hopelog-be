@@ -1,6 +1,11 @@
-from fastapi.responses import StreamingResponse
 from openai import AsyncOpenAI, OpenAI
+from pydantic import ValidationError
 from dotenv import load_dotenv
+from typing import List, Dict
+import json
+import logging
+import os
+from .models import EmotionalState
 from .filter_model import (
     is_greeting,
     check_toxic_words,
@@ -15,9 +20,6 @@ from .filter_model import (
     therapist_reply,
     is_inappropriate_request,
 )
-import logging
-import os
-import re
 
 
 load_dotenv()
@@ -32,17 +34,108 @@ syncClient = OpenAI(
 )
 
 
-async def summary_agent(conversation_history):
+async def feelings_analysis_agent(conversation_history: List[Dict[str, str]]) -> Dict:
+    if not conversation_history:
+        raise ValueError(
+            "conversation_history must be a non-empty list of dictionaries."
+        )
+
     formatted_history = "\n".join(
-        f"User: {entry['user']}" if "user" in entry else f"AI: {entry['therapist']}"
+        f"User: {entry.user}" if entry.user else f"AI: {entry.therapist}"
+        for entry in conversation_history
+    )
+
+    prompt = f"""
+    Analyze the emotional content of this conversation and identify the top 5 most prominent emotions from this list:
+    Joy, Trust, Fear, Surprise, Sadness, Disgust, Anger, Anticipation, Love, Optimism, Disappointment, 
+    Remorse, Aggressiveness, Submission, Contempt, Awe, Guilt, Envy, Pride, Hope, Anxiety
+
+    For each emotion:
+    - Provide an intensity score between 0.0 and 1.0
+    - Include a relevant quote from the conversation that demonstrates this emotion
+    
+    Only return the top 5 emotions in order of intensity.
+    
+    Conversation:
+    {formatted_history}
+    
+    Format the response as:
+    {{
+        "emotions": [
+            {{
+                "emotion": "Emotion1",
+                "intensity": 0.8,
+                "evidence": "Quote showing emotion"
+            }},
+            ...up to 5 emotions
+        ]
+    }}
+    """
+
+    try:
+        # Call the LLM
+        response = await client.chat.completions.create(
+            model="gemini-2.0-flash-exp",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an emotional analysis AI. Analyze conversations and provide the top 5 emotions with scores.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.3,
+            max_tokens=1000,
+        )
+
+        # Extract and clean the LLM output
+        llm_output = response.choices[0].message.content.strip("```").strip()
+        if llm_output.startswith("json"):
+            llm_output = llm_output[4:].strip()
+
+        # Extract JSON block if extra data exists
+        json_start = llm_output.find("{")
+        json_end = llm_output.rfind("}")
+        if json_start == -1 or json_end == -1:
+            raise ValueError("No valid JSON found in the LLM response.")
+
+        json_string = llm_output[json_start : json_end + 1]
+
+        # Parse JSON
+        output_data = json.loads(json_string)
+
+        # Validate using Pydantic
+        validated_output = EmotionalState.model_validate(output_data)
+        logging.info("Validated output: %s", validated_output)
+        return validated_output.model_dump()
+
+    except json.JSONDecodeError as e:
+        raise ValueError(
+            f"Failed to parse LLM response as JSON: {e}. Raw content: {llm_output}"
+        ) from e
+    except ValidationError as e:
+        raise ValueError(f"Schema validation failed: {e}") from e
+    except Exception as e:
+        raise RuntimeError(f"Unexpected error: {e}") from e
+
+
+async def summary_agent(conversation_history, user_name=""):
+    formatted_history = "\n".join(
+        f"User: {entry.user}" if entry.user else f"AI: {entry.therapist}"
         for entry in conversation_history
     )
 
     prompt = f"""
     You are a conversational therapist.
-    Based on the conversation history provided, 
-    summarize the discussion and highlight key points that are important to the user. Ensure the response is concise and does not include any prefatory remarks,
-    meta-statements, or instruction steps. Provide the summary and key points directly.
+    Based on the conversation history provided, analyze and summarize the discussion.
+    Focus on extracting key points that matter to the user.
+    
+    Guidelines:
+    - Be direct and concise
+    - Avoid introductory phrases or meta-commentary
+    - Present insights straightforwardly
+    - Focus on the core discussion points
+    - Highlight meaningful patterns and concerns
+    - Should address the user by their name, {user_name}
 
     {formatted_history}
     
@@ -76,7 +169,7 @@ async def summary_agent(conversation_history):
 
 async def title_agent(conversation_history):
     formatted_history = "\n".join(
-        f"User: {entry['user']}" if "user" in entry else f"AI: {entry['therapist']}"
+        f"User: {entry.user}" if entry.user else f"AI: {entry.therapist}"
         for entry in conversation_history
     )
 
@@ -109,9 +202,9 @@ async def title_agent(conversation_history):
         return None
 
 
-async def analyze_agent(conversation_history):
+async def analyze_agent(conversation_history, user_name=""):
     formatted_history = "\n".join(
-        f"User: {entry['user']}" if "user" in entry else f"AI: {entry['therapist']}"
+        f"User: {entry.user}" if entry.user else f"AI: {entry.therapist}"
         for entry in conversation_history
     )
 
@@ -120,7 +213,7 @@ async def analyze_agent(conversation_history):
     Based on the conversation history provided, 
     summarize the discussion and highlight key points that are important to the user. Ensure the response is concise and does not include any prefatory remarks,
     meta-statements, or instruction steps. Provide the summary and key points directly.
-
+    Should address the user by their name, {user_name}
     {formatted_history}
     
     Perform the following tasks:
