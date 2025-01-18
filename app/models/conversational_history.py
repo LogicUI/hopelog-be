@@ -1,6 +1,11 @@
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List
+
+
+class ConversationEntry(BaseModel):
+    user: str
+    therapist: str
 
 
 class ConversationalHistory(BaseModel):
-    conversation_history: List[Dict[str, str]]
+    conversation_history: List[ConversationEntry]
