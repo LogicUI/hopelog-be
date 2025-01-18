@@ -1,18 +1,17 @@
 import logging
 import json
 import asyncio
-from typing import List, Dict
-from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
-from userUtils.user_utils import verify_token, get_current_user
+from userUtils.user_utils import get_current_user
 from aiModel.ai_therapist import (
+    feelings_analysis_agent,
     stream_emotional_therapist_agent,
     emotional_therapist_agent,
     summary_agent,
     analyze_agent,
     title_agent,
 )
-from models.chat_response import ChatResponse
 from redisCache.redis_cache import get_cache, set_cache, reset_cache
 from .utils import (
     save_conversation_entry,
@@ -32,7 +31,6 @@ logging.basicConfig(
 
 @router.post("/stream-ai-prompt")
 def stream_ai_prompt(request: dict, token: str = Depends(get_current_user)):
-    user_id = token["sub"]
     user_name = token["user_metadata"]["name"]
     user_message = request.get("user_message")
     conversation_history = request.get("conversation_history")
@@ -76,28 +74,31 @@ async def save_convo_entry(
 ):
     try:
         user_id = token["sub"]
+        user_name = token["user_metadata"]["name"]
         start_time = perf_counter()
         converse_history = conversational_history.conversation_history
-        saved_convo_history = json.dumps(converse_history)
-        summary_task = summary_agent(converse_history)
-        analysis_task = analyze_agent(converse_history)
+        summary_task = summary_agent(converse_history, user_name)
+        analysis_task = analyze_agent(converse_history, user_name)
         title_task = title_agent(converse_history)
-        summary, analysis, title = await asyncio.gather(
-            summary_task, analysis_task, title_task
+        emotional_task = feelings_analysis_agent(converse_history)
+        logging.info(f"Emotional task: {emotional_task}")
+        summary, analysis, title, emotions = await asyncio.gather(
+            summary_task, analysis_task, title_task, emotional_task
         )
         journal_id = save_conversation_entry(
-            db_connection, user_id, title, summary, analysis
+            db_connection, user_id, title, summary, analysis, emotions
         )
         end_time = perf_counter()
         elapsed_time = end_time - start_time
         logging.info("Time taken to save conversation entry: %s", elapsed_time)
-        logging.info(f"Journal saved successfully with id of {journal_id}")
+        logging.info("Journal saved successfully with id of %s", journal_id)
         reset_cache(user_id)
         logging.info("Cache reset for user: %s", user_id)
         return {
             "title": title,
             "summary": summary,
             "analysis": analysis,
+            "emotions": emotions.get("emotions"),
             "results": f"Journal saved successfully with id of {journal_id}",
         }
 
