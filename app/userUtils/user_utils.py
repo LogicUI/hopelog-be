@@ -22,14 +22,14 @@ def verify_token(token: str):
             token, SUPABASE_JWT_SECRET, algorithms=["HS256"], audience="authenticated"
         )
         return payload
-    except jwt.ExpiredSignatureError:
+    except jwt.ExpiredSignatureError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"
-        )
-    except jwt.InvalidTokenError:
+        ) from exc
+    except jwt.InvalidTokenError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-        )
+        ) from exc
 
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
