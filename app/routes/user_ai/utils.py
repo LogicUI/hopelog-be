@@ -1,15 +1,18 @@
 from datetime import datetime
 import logging
-import psycopg2
+import json
 
 
-def save_conversation_entry(db_connection, user_id, title, summary, analysis):
+def save_conversation_entry(db_connection, user_id, title, summary, analysis, emotions):
     query = """
-        INSERT INTO journal_entries (user_id, title, summary, analysis, created_at, updated_at)
-        VALUES (%s, %s, %s, %s, %s, %s)
+        INSERT INTO journal_entries (user_id, title, summary, analysis, emotions, created_at, updated_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
         RETURNING id;
     """
-
+    flattened_emotions = emotions["emotions"]
+    logging.info("Flattened emotions: %s", flattened_emotions)
+    emotions_json = json.dumps(flattened_emotions)
+    logging.info("Emotions JSON: %s", emotions_json)
     current_timestamp = datetime.now()
 
     try:
@@ -21,6 +24,7 @@ def save_conversation_entry(db_connection, user_id, title, summary, analysis):
                     title,
                     summary,
                     analysis,
+                    emotions_json,
                     current_timestamp,
                     current_timestamp,
                 ),
@@ -30,14 +34,14 @@ def save_conversation_entry(db_connection, user_id, title, summary, analysis):
 
             inserted_id = cursor.fetchone()[0]
             return inserted_id
-    except Exception as e:
+    except Exception:
         db_connection.rollback()
         raise
 
 
 def get_conversational_entries(db_connection, user_id):
     query = """
-        SELECT id, title, summary, analysis, created_at
+        SELECT id, title, summary, analysis, created_at, emotions
         FROM journal_entries
         WHERE user_id = %s
         ORDER BY created_at DESC;
