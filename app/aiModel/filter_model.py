@@ -513,23 +513,42 @@ def is_negation(user_message):
 
 def is_affirmation(user_message):
     affirmation_phrases = [
-        "yes",
-        "yup",
-        "yeah",
-        "of course",
-        "sure",
-        "absolutely",
-        "definitely",
-        "okay",
-        "ok",
+        r"\byes\b",
+        r"\byup\b",
+        r"\byeah\b",
+        r"\bof course\b",
+        r"\bsure\b",
+        r"\babsolutely\b",
+        r"\bdefinitely\b",
+        r"\bokay\b",
+        r"\bok\b",
+    ]
+
+    # Words that indicate uncertainty or complexity
+    uncertainty_indicators = [
+        "not sure",
+        "maybe",
+        "perhaps",
+        "uncertain",
+        "doubt",
+        "if",
+        "might",
+        "could",
+        "would",
+        "in vain",
     ]
 
     normalized_message = user_message.strip().lower()
 
-    return any(
-        re.search(rf"\b{phrase}\b", normalized_message)
-        for phrase in affirmation_phrases
-    )
+    # First check for uncertainty indicators
+    if any(indicator in normalized_message for indicator in uncertainty_indicators):
+        return False
+
+    # Then check for simple affirmations
+    return (
+        any(re.search(pattern, normalized_message) for pattern in affirmation_phrases)
+        and len(normalized_message.split()) <= 4
+    )  # Only match short responses
 
 
 def is_short_message(user_message):
