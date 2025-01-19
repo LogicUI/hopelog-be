@@ -135,6 +135,7 @@ async def summary_agent(conversation_history, user_name=""):
     - Present insights straightforwardly
     - Focus on the core discussion points
     - Highlight meaningful patterns and concerns
+    - Do not use "key points" or "key insights"
     - Should address the user by their name, {user_name}
 
     {formatted_history}
@@ -143,8 +144,8 @@ async def summary_agent(conversation_history, user_name=""):
     1. Create a summary of the conversation history based on what was discussed. 
     2. Highlight key points of the conversations that are important to the user.
     3. Remove the word summary from the response.
-    4. Remove the words i or the individual for example instead of "I'm feeling anxious about... " 
-    change to feeling about..
+    4. Remove the words  for example instead of "I'm feeling anxious about... " 
+    change to {user_name} you are feeling about..
     5. Remove any Beginning word like Discussion:, conversation: etc
     """
 
