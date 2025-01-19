@@ -1,9 +1,18 @@
 from datetime import datetime
+from pytz import timezone as pytz_timezone, utc
 import logging
 import json
 
 
-def save_conversation_entry(db_connection, user_id, title, summary, analysis, emotions):
+def get_current_time(timezone):
+    current_time = datetime.now(pytz_timezone(timezone))
+    logging.info("Current time: %s", current_time)
+    return current_time.strftime("%d %b %Y at %I:%M%p").replace(" 0", " ")
+
+
+def save_conversation_entry(
+    db_connection, user_id, title, summary, analysis, emotions, current_time
+):
     query = """
         INSERT INTO journal_entries (user_id, title, summary, analysis, emotions, created_at, updated_at)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -13,7 +22,8 @@ def save_conversation_entry(db_connection, user_id, title, summary, analysis, em
     logging.info("Flattened emotions: %s", flattened_emotions)
     emotions_json = json.dumps(flattened_emotions)
     logging.info("Emotions JSON: %s", emotions_json)
-    current_timestamp = datetime.now()
+    current_timestamp = current_time
+    logging.info("Current timestamp: %s", current_timestamp)
 
     try:
         with db_connection.cursor() as cursor:
