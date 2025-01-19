@@ -5,7 +5,7 @@ from typing import List
 class EmotionScore(BaseModel):
     emotion: str = Field(
         description="Type of emotion detected",
-        pattern="^(Joy|Trust|Fear|Surprise|Sadness|Disgust|Anger|Anticipation|Love|Optimism|Disappointment|Remorse|Aggressiveness|Submission|Contempt|Awe|Guilt|Envy|Pride|Anxiety|Hope)$",
+        pattern="^(Joy|Uncertainty|Trust|Fear|Surprise|Sadness|Disgust|Anger|Anticipation|Love|Optimism|Disappointment|Remorse|Aggressiveness|Submission|Contempt|Awe|Guilt|Envy|Pride|Anxiety|Hope)$",
     )
     intensity: float = Field(
         description="Intensity score of the emotion", ge=0.0, le=1.0
