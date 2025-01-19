@@ -8,6 +8,40 @@ The Feelings AI Bot is a supportive tool designed to help users reflect on their
 
 ## Version History
 
+### Version 1.3 - Launched on 19 Jan 2025
+
+**New Feature - Voice Input:**
+- Added voice-to-text functionality for message input
+- Implemented microphone toggle button that changes icon state during recording
+- Voice input automatically converts to text in the message field
+- Seamlessly integrates with existing chat interface
+- Supports natural conversation flow through voice commands
+- Visual indicator shows active recording status
+
+**Bug Fix - Timezone Handling:**
+- Fixed timestamp synchronization for conversation entries
+- Now accurately records entry times based on user's local timezone
+- Automatically detects user timezone using moment-timezone
+- Ensures consistent timestamp display across different regions
+- Preserves chronological accuracy in conversation history
+
+
+### Version 1.2 – Launched on 18 Jan 2025
+
+**Bug Fixes:**
+- Resolved an issue where greeting phrases combined with emotional content would trigger generic greeting responses instead of addressing the emotional context.
+
+**Enhanced Analysis:**
+- Improved summary and analysis capabilities by incorporating user context and history for more personalized responses.
+
+**New Feature - Feelings Agent:**
+- Introduced emotion detection and intensity rating system on the frontend
+- Added ability to identify and track multiple emotions simultaneously
+- Each detected emotion is rated on an intensity scale
+- Emotion data is stored for future visualization and trend analysis
+- Integrated with 20+ emotion categories including Joy, Trust, Fear, Surprise, and more
+
+
 ### Patch Version 1.1 – Launched on 11 Jan 2025
 **Improved Bot Responses:**
 - Enhanced handling of greetings, short responses, and gibberish text inputs such as "hello", "bye", and "rwarw".
