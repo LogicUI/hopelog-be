@@ -1,6 +1,7 @@
 import logging
 import json
 import asyncio
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from userUtils.user_utils import get_current_user
@@ -17,6 +18,7 @@ from .utils import (
     save_conversation_entry,
     get_conversational_entries,
     delete_conversational_entry,
+    get_current_time,
 )
 from database_init import get_db_connection
 from models.conversational_history import ConversationalHistory
@@ -73,6 +75,9 @@ async def save_convo_entry(
     db_connection=Depends(get_db_connection),
 ):
     try:
+        timezone = conversational_history.timezone
+        logging.info("timezone: %s", timezone)
+        current_time = get_current_time(timezone)
         user_id = token["sub"]
         user_name = token["user_metadata"]["name"]
         start_time = perf_counter()
@@ -86,7 +91,7 @@ async def save_convo_entry(
             summary_task, analysis_task, title_task, emotional_task
         )
         journal_id = save_conversation_entry(
-            db_connection, user_id, title, summary, analysis, emotions
+            db_connection, user_id, title, summary, analysis, emotions, current_time
         )
         end_time = perf_counter()
         elapsed_time = end_time - start_time
