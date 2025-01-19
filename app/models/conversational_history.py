@@ -9,3 +9,4 @@ class ConversationEntry(BaseModel):
 
 class ConversationalHistory(BaseModel):
     conversation_history: List[ConversationEntry]
+    timezone: str = "UTC"
