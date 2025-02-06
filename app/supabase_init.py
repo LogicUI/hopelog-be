@@ -15,10 +15,6 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
-logging.info("supabase url: %s", SUPABASE_URL)
-logging.info("supabase key: %s", SUPABASE_ANON_KEY)
-
-
 if not SUPABASE_URL or not SUPABASE_ANON_KEY:
     raise ValueError("Supabase URL or Key is missing")
 
