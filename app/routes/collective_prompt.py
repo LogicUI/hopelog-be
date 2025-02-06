@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, Request
 from redisCache.redis_cache import (
     get_cache,
     set_cache_with_midnight_expiration,
-    reset_cache,
 )
 from supabase_init import supabase
 from database_init import get_db_connection
