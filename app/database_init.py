@@ -20,12 +20,6 @@ port = os.getenv("PORT")
 dbname = os.getenv("DBNAME")
 
 
-logging.info("user: %s", user)
-logging.info("password %s", password)
-logging.info("host %s", host)
-logging.info("port %s", port)
-logging
-
 # Logging setup
 logging.basicConfig(
     level=logging.INFO,
