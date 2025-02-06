@@ -17,6 +17,11 @@ secrets:
   GEMINI_BASE_URL: /copilot/applications/hopelogdev/GEMINI_BASE_URL
   REDIS_URL: /copilot/applications/hopelogdev/REDIS_URL
   SUPABASE_JWT: /copilot/applications/hopelogdev/SUPABASE_JWT
+  STRIPE_SECRET_KEY: /copilot/applications/hopelogdev/STRIPE_SECRET_KEY
+  STRIPE_WEBHOOK_SECRET: /copilot/applications/hopelogdev/STRIPE_WEBHOOK_SECRET
+  MAILGUN_API_KEY: /copilot/applications/hopelogdev/MAILGUN_API_KEY
+  MAILGUN_URL: /copilot/applications/hopelogdev/MAILGUN_URL
+  MAILGUN_DOMAIN: /copilot/applications/hopelogdev/MAILGUN_DOMAIN
 http:
   path: '/'              
   targetContainer: hopelog-backend
