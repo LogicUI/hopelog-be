@@ -1,6 +1,3 @@
-"""This file contains the FastAPI code for the authentication API. 
-It contains the following endpoints:"""
-
 import logging
 import secrets
 import hashlib
@@ -16,6 +13,9 @@ from dotenv import load_dotenv
 from supabase_init import supabase
 from routes.collective_prompt import router
 from routes.user_ai.user_ai import router as router_ai
+from routes.email.email import router as router_email
+from cronJobs.cronJobs import init_cron_jobs
+from contextlib import asynccontextmanager
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,9 +25,20 @@ logging.basicConfig(
 logger = logging.getLogger("BasicLogger")
 
 load_dotenv()
-app = FastAPI()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler = init_cron_jobs()
+    yield
+    scheduler.shutdown()
+    logger.info("Scheduler shut down")
+
+
+app = FastAPI(lifespan=lifespan)
 app.include_router(router, prefix="/api")
 app.include_router(router_ai, prefix="/api")
+app.include_router(router_email, prefix="/api")
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,6 +46,8 @@ app.add_middleware(
         "http://localhost:3000",
         "https://build-with-ai-hackaton-fe.vercel.app/",
         "https://build-with-ai-hackaton-fe.vercel.app",
+        "https://hopelog-dev.vercel.app",
+        "https://hopelog-dev-git-production-john-wees-projects.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -80,7 +93,7 @@ def sign_up(user: User):
             {
                 "email": user.email,
                 "password": user.password,
-                "options": {"data": {"name": user.name, "age": user.age}},
+                "options": {"data": {"name": user.name}},
             }
         )
         logger.info("Response %s", str(response))
