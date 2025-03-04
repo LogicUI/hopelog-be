@@ -15,7 +15,6 @@ secrets:
   DBNAME: /copilot/applications/hopelogdev/DBNAME
   GEMINI_API_KEY: /copilot/applications/hopelogdev/GEMINI_API_KEY
   GEMINI_BASE_URL: /copilot/applications/hopelogdev/GEMINI_BASE_URL
-  REDIS_URL: /copilot/applications/hopelogdev/REDIS_URL
   SUPABASE_JWT: /copilot/applications/hopelogdev/SUPABASE_JWT
   STRIPE_SECRET_KEY: /copilot/applications/hopelogdev/STRIPE_SECRET_KEY
   STRIPE_WEBHOOK_SECRET: /copilot/applications/hopelogdev/STRIPE_WEBHOOK_SECRET
