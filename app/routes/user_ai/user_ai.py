@@ -14,7 +14,6 @@ from aiModel.ai_therapist import (
     analyze_agent,
     title_agent,
 )
-from redisCache.redis_cache import get_cache, set_cache, reset_cache
 from .utils import (
     save_conversation_entry,
     get_conversational_entries,

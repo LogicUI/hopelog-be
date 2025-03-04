@@ -3,7 +3,7 @@ type: 'Load Balanced Web Service'
 
 image:
   build: ./Dockerfile
-  port: 5000
+  port: 5050
 
 secrets:
   SUPABASE_URL: /copilot/hopelogdev/development/SUPABASE_URL
