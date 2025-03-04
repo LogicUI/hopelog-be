@@ -307,17 +307,8 @@ async def update_convo_session(
         logging.info("User message: %s", user_message)
         logging.info("Therapist response: %s", therapist_response)
         save_conversation_logs(db_connection, user_message, therapist_response)
-    set_cache(user_id, json.dumps(conversation_history))
     return {"message": "Conversation session updated successfully"}
 
-
-@router.get("/get-cached-convo-history")
-async def get_cached_convo_history(token: str = Depends(get_current_user)):
-    user_id = token["sub"]
-    cached_convo_history = get_cache(user_id)
-    if not cached_convo_history:
-        return {"conversation_history": []}
-    return {"conversation_history": json.loads(cached_convo_history)}
 
 
 async def check_subscription_limit(
@@ -374,8 +365,6 @@ async def save_convo_entry(
         elapsed_time = end_time - start_time
         logging.info("Time taken to save conversation entry: %s", elapsed_time)
         logging.info("Journal saved successfully with id of %s", journal_id)
-        reset_cache(user_id)
-        logging.info("Cache reset for user: %s", user_id)
         return {
             "title": title,
             "summary": summary,

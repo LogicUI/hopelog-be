@@ -11,7 +11,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from supabase import AuthError, AuthApiError
 from dotenv import load_dotenv
 from supabase_init import supabase
-from routes.collective_prompt import router
 from routes.user_ai.user_ai import router as router_ai
 from routes.email.email import router as router_email
 from cronJobs.cronJobs import init_cron_jobs
@@ -36,7 +35,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-app.include_router(router, prefix="/api")
 app.include_router(router_ai, prefix="/api")
 app.include_router(router_email, prefix="/api")
 
